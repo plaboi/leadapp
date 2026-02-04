@@ -9,6 +9,7 @@ import {
   integer,
   jsonb,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const leadStatusEnum = pgEnum("lead_status", [
@@ -42,12 +43,16 @@ export const leads = pgTable(
     lastError: text("last_error"),
     initialSentAt: timestamp("initial_sent_at"),
     followupSentAt: timestamp("followup_sent_at"),
+    hasReplied: boolean("has_replied").notNull().default(false),
+    repliedAt: timestamp("replied_at"),
+    outboundMessageId: varchar("outbound_message_id", { length: 255 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
     index("leads_clerk_user_id_idx").on(table.clerkUserId),
     index("leads_status_idx").on(table.status),
+    index("leads_email_idx").on(table.email),
   ]
 );
 
@@ -121,3 +126,12 @@ export const outboundQueue = pgTable(
     index("outbound_queue_lead_id_idx").on(table.leadId),
   ]
 );
+
+export const workerState = pgTable("worker_state", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  isRunning: boolean("is_running").notNull().default(false),
+  emptyTickCount: integer("empty_tick_count").notNull().default(0),
+  lastTickAt: timestamp("last_tick_at"),
+  startedAt: timestamp("started_at"),
+  stoppedAt: timestamp("stopped_at"),
+});

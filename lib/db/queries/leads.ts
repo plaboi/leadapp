@@ -77,3 +77,53 @@ export async function updateLead(
     .returning();
   return row ?? null;
 }
+
+/**
+ * Find a lead by the outbound message ID (Resend message ID)
+ * Used for matching inbound replies via the in_reply_to header
+ */
+export async function findLeadByOutboundMessageId(
+  messageId: string
+): Promise<LeadRow | null> {
+  const [row] = await db
+    .select()
+    .from(leads)
+    .where(eq(leads.outboundMessageId, messageId))
+    .limit(1);
+  return row ?? null;
+}
+
+/**
+ * Find a lead by email address (fallback for reply matching)
+ * Returns the most recently updated lead for that email
+ */
+export async function findLeadByEmail(
+  email: string
+): Promise<LeadRow | null> {
+  const rows = await db
+    .select()
+    .from(leads)
+    .where(eq(leads.email, email))
+    .orderBy(leads.updatedAt);
+  // Return the most recently updated lead (last in ascending order)
+  return rows.length > 0 ? rows[rows.length - 1] : null;
+}
+
+/**
+ * Mark a lead as replied (used by webhook)
+ */
+export async function markLeadAsReplied(
+  leadId: string
+): Promise<LeadRow | null> {
+  const [row] = await db
+    .update(leads)
+    .set({
+      hasReplied: true,
+      repliedAt: new Date(),
+      status: "replied",
+      updatedAt: new Date(),
+    })
+    .where(eq(leads.id, leadId))
+    .returning();
+  return row ?? null;
+}

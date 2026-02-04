@@ -66,6 +66,8 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
       initialSentAt: null,
       followupSentAt: null,
       lastError: null,
+      hasReplied: false,
+      repliedAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

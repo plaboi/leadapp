@@ -22,11 +22,11 @@ import {
   MAX_JOBS_PER_TICK,
   RATE_LIMIT_SECONDS,
 } from "@/lib/constants";
-
-import { cronTask } from "@/scripts/cron-worker";
-
-// track consecutive failed jobs
-let noDueJobCount = 0;
+import {
+  incrementEmptyTickCount,
+  resetEmptyTickCount,
+  isOutboundWorkerRunning,
+} from "@/lib/db/queries/worker-state";
 
 export async function POST(request: Request) {
   const cronSecret = request.headers.get("x-cron-secret") ?? request.headers.get("cron-secret");
@@ -36,38 +36,70 @@ export async function POST(request: Request) {
   }
 
   try {
-    const jobs = await fetchAndLockJobs(MAX_JOBS_PER_TICK);
-    if (jobs.length === 0) {
-      noDueJobCount++;
-    
-      if (noDueJobCount >= 2) {
-        cronTask?.stop();
-        return NextResponse.json({processed: 0, message: "Ended Tick"});
-      }
-      return NextResponse.json({ processed: 0, message: "No due jobs", noDueJobCount });
-      
+    // Check if worker should still be running
+    const running = await isOutboundWorkerRunning();
+    if (!running) {
+      console.log("[Worker1] Worker not running, skipping tick");
+      return NextResponse.json({ 
+        processed: 0, 
+        message: "Worker not running",
+        shouldStop: true 
+      });
     }
-    noDueJobCount = 0;
+
+    const jobs = await fetchAndLockJobs(MAX_JOBS_PER_TICK);
+    
+    if (jobs.length === 0) {
+      const { emptyTickCount, shouldStop } = await incrementEmptyTickCount();
+      console.log(`[Worker1] No due jobs (empty count: ${emptyTickCount})`);
+      
+      if (shouldStop) {
+        console.log(`[Worker1] Stopped after 3 consecutive empty ticks at ${new Date().toISOString()}`);
+      }
+      
+      return NextResponse.json({ 
+        processed: 0, 
+        message: "No due jobs", 
+        emptyTickCount,
+        shouldStop
+      });
+    }
+
+    // Reset empty tick count since we have jobs
+    await resetEmptyTickCount();
+    console.log(`[Worker1] Tick: Found ${jobs.length} due jobs, processing...`);
 
     let processed = 0;
+    let failed = 0;
+
     for (const job of jobs) {
       const rateLimited = await hasRecentSentEvent(
         job.clerkUserId,
         RATE_LIMIT_SECONDS
       );
       if (rateLimited) {
+        console.log(`[Worker1] Rate limited for user ${job.clerkUserId}, skipping job ${job.id}`);
         await unlockJob(job.id);
         continue;
       }
 
       const lead = await getLead(job.leadId, job.clerkUserId);
       if (!lead) {
+        console.log(`[Worker1] Lead ${job.leadId} not found, deleting job ${job.id}`);
+        await deleteJob(job.id);
+        continue;
+      }
+
+      // SAFETY CHECK: Skip followup jobs if lead has replied
+      if (job.kind === "followup" && lead.hasReplied) {
+        console.log(`[Worker1] Skipping followup for lead ${lead.id} - reply detected`);
         await deleteJob(job.id);
         continue;
       }
 
       if (job.kind === "initial") {
         if (lead.status !== "queued" && lead.status !== "sending") {
+          console.log(`[Worker1] Lead ${lead.id} status is ${lead.status}, skipping initial job`);
           await deleteJob(job.id);
           continue;
         }
@@ -75,6 +107,7 @@ export async function POST(request: Request) {
 
         const seed = await getCampaignSeedByUser(job.clerkUserId);
         if (!seed?.lockedAt) {
+          console.log(`[Worker1] Campaign seed not locked for user ${job.clerkUserId}`);
           await transitionLead(lead.id, job.clerkUserId, "queued");
           await unlockJob(job.id);
           continue;
@@ -83,6 +116,7 @@ export async function POST(request: Request) {
         let subject: string;
         let body: string;
         try {
+          console.log(`[Worker1] Generating initial email for lead ${lead.id}`);
           const generated = await generateInitialEmail(
             { subject: seed.subject, body: seed.body },
             { name: lead.name, notes: lead.notes }
@@ -90,6 +124,7 @@ export async function POST(request: Request) {
           subject = generated.subject;
           body = generated.body;
         } catch (err) {
+          console.error(`[Worker1] Gemini error for lead ${lead.id}:`, err);
           await transitionLead(lead.id, job.clerkUserId, "queued");
           await handleJobFailure(
             job,
@@ -97,6 +132,7 @@ export async function POST(request: Request) {
             job.clerkUserId,
             err instanceof Error ? err.message : "Gemini error"
           );
+          failed++;
           continue;
         }
 
@@ -108,6 +144,7 @@ export async function POST(request: Request) {
           body,
         });
 
+        console.log(`[Worker1] Sending initial email to ${lead.email}`);
         const sendResult = await sendEmail(lead.email, subject, body);
 
         if (sendResult.ok) {
@@ -126,12 +163,15 @@ export async function POST(request: Request) {
             initialSentAt: new Date(),
             lastSentAt: new Date(),
             lastError: null,
+            outboundMessageId: sendResult.providerMessageId ?? null,
           });
           await scheduleFollowup(lead.id, job.clerkUserId);
           await transitionLead(lead.id, job.clerkUserId, "followup_queued");
           await deleteJob(job.id);
           processed++;
+          console.log(`[Worker1] Initial email sent successfully to lead ${lead.id}`);
         } else {
+          console.error(`[Worker1] Send failed for lead ${lead.id}: ${sendResult.error}`);
           await createEmailEvent({
             leadId: lead.id,
             clerkUserId: job.clerkUserId,
@@ -144,17 +184,27 @@ export async function POST(request: Request) {
             job.clerkUserId,
             sendResult.error
           );
+          failed++;
         }
         continue;
       }
 
       if (job.kind === "followup") {
+        // Double-check hasReplied right before sending
+        const freshLead = await getLead(job.leadId, job.clerkUserId);
+        if (freshLead?.hasReplied) {
+          console.log(`[Worker1] Skipping followup for lead ${lead.id} - fresh reply check detected`);
+          await deleteJob(job.id);
+          continue;
+        }
+
         const previousEmail = await getLatestGeneratedEmailForLead(
           lead.id,
           job.clerkUserId,
           "initial"
         );
         if (!previousEmail?.body) {
+          console.log(`[Worker1] No previous email found for lead ${lead.id}, deleting followup job`);
           await deleteJob(job.id);
           continue;
         }
@@ -164,6 +214,7 @@ export async function POST(request: Request) {
         let subject: string;
         let body: string;
         try {
+          console.log(`[Worker1] Generating followup email for lead ${lead.id}`);
           const generated = await generateFollowupEmail(
             {
               subject: previousEmail.subject,
@@ -174,6 +225,7 @@ export async function POST(request: Request) {
           subject = generated.subject;
           body = generated.body;
         } catch (err) {
+          console.error(`[Worker1] Gemini error for followup lead ${lead.id}:`, err);
           await transitionLead(lead.id, job.clerkUserId, "followup_queued");
           await handleJobFailure(
             job,
@@ -181,6 +233,7 @@ export async function POST(request: Request) {
             job.clerkUserId,
             err instanceof Error ? err.message : "Gemini error"
           );
+          failed++;
           continue;
         }
 
@@ -192,6 +245,7 @@ export async function POST(request: Request) {
           body,
         });
 
+        console.log(`[Worker1] Sending followup email to ${lead.email}`);
         const sendResult = await sendEmail(lead.email, subject, body);
 
         if (sendResult.ok) {
@@ -210,10 +264,13 @@ export async function POST(request: Request) {
             followupSentAt: new Date(),
             lastSentAt: new Date(),
             lastError: null,
+            outboundMessageId: sendResult.providerMessageId ?? null,
           });
           await deleteJob(job.id);
           processed++;
+          console.log(`[Worker1] Followup email sent successfully to lead ${lead.id}`);
         } else {
+          console.error(`[Worker1] Followup send failed for lead ${lead.id}: ${sendResult.error}`);
           await createEmailEvent({
             leadId: lead.id,
             clerkUserId: job.clerkUserId,
@@ -227,13 +284,20 @@ export async function POST(request: Request) {
             job.clerkUserId,
             sendResult.error
           );
+          failed++;
         }
       }
     }
 
-    return NextResponse.json({ processed, total: jobs.length });
+    console.log(`[Worker1] Tick complete: Processed ${processed} jobs, ${failed} failed`);
+    return NextResponse.json({ 
+      processed, 
+      failed,
+      total: jobs.length,
+      shouldStop: false
+    });
   } catch (error) {
-    console.error("POST /api/worker/tick", error);
+    console.error("[Worker1] Tick error:", error);
     return NextResponse.json(
       { error: "Worker tick failed" },
       { status: 500 }
@@ -249,6 +313,7 @@ async function handleJobFailure(
 ): Promise<void> {
   const attempts = job.attempts + 1;
   if (attempts >= job.maxAttempts) {
+    console.log(`[Worker1] Job ${job.id} failed after ${attempts} attempts, marking lead as failed`);
     await transitionLead(leadId, clerkUserId, "failed", {
       lastError: errorMessage,
     });
@@ -257,5 +322,6 @@ async function handleJobFailure(
   }
   const delaySeconds = calculateBackoff(attempts);
   const runAfter = new Date(Date.now() + delaySeconds * 1000);
+  console.log(`[Worker1] Rescheduling job ${job.id}, attempt ${attempts}, retry in ${delaySeconds}s`);
   await rescheduleJob(job.id, runAfter, attempts);
 }

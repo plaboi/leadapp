@@ -9,6 +9,8 @@ export type LeadApi = {
   initialSentAt: string | null;
   followupSentAt: string | null;
   lastError: string | null;
+  hasReplied: boolean;
+  repliedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -27,6 +29,8 @@ export function serializeLead(row: LeadRow): LeadApi {
     initialSentAt: row.initialSentAt ? toIso(row.initialSentAt) : null,
     followupSentAt: row.followupSentAt ? toIso(row.followupSentAt) : null,
     lastError: row.lastError ?? null,
+    hasReplied: row.hasReplied,
+    repliedAt: row.repliedAt ? toIso(row.repliedAt) : null,
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   };

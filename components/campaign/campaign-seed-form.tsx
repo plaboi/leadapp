@@ -92,19 +92,27 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
 
   const handleQueueInitial = async () => {
     setIsQueueing(true);
+    
     try {
-      const res = await fetch("/api/queue/initial", { method: "POST" });
+      const res = await fetch("/api/worker/outbound/start", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to queue");
+        toast.error(data.error ?? "Failed to start worker");
         return;
       }
-      toast.success(
-        `Queued ${data.enqueued} lead(s). ${data.skipped} skipped.`
-      );
+      
+      if (data.workerAlreadyRunning) {
+        toast.info(
+          `Worker already running. Queued ${data.enqueued} new lead(s).`
+        );
+      } else {
+        toast.success(
+          `Worker started. Queued ${data.enqueued} lead(s). ${data.skipped} skipped.`
+        );
+      }
       window.location.reload();
     } catch {
-      toast.error("Failed to queue leads");
+      toast.error("Failed to start outbound worker");
     } finally {
       setIsQueueing(false);
     }
@@ -230,12 +238,12 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
               {isQueueing ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                "Queue initial emails"
+                "Queue Emails"
               )}
             </Button>
             <p className="mt-1 text-muted-foreground text-xs">
-              Enqueues all draft leads for initial send (one per cron tick, rate
-              limited).
+              Starts the outbound worker and queues all draft leads. Worker auto-stops 
+              after 3 empty ticks. Replies are detected automatically via webhook.
             </p>
           </div>
         )}

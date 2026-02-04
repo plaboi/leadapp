@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Check, X, Loader2 } from "lucide-react";
+import { Pencil, Check, X } from "lucide-react";
 
 export type Lead = {
   id: string;
@@ -20,6 +20,8 @@ export type Lead = {
   initialSentAt: string | null;
   followupSentAt: string | null;
   lastError: string | null;
+  hasReplied: boolean;
+  repliedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -63,28 +65,9 @@ type LeadRowProps = {
 
 export function LeadRow({ lead, onUpdate }: LeadRowProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isMarkingReplied, setIsMarkingReplied] = useState(false);
   const [name, setName] = useState(lead.name);
   const [email, setEmail] = useState(lead.email);
   const [notes, setNotes] = useState(lead.notes ?? "");
-
-  const handleMarkReplied = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMarkingReplied(true);
-    try {
-      const res = await fetch(`/api/leads/${lead.id}/mark-replied`, {
-        method: "PATCH",
-      });
-      if (!res.ok) throw new Error("Failed");
-      const { lead: updated } = await res.json();
-      onUpdate(lead.id, updated);
-      toast.success("Marked as replied");
-    } catch {
-      toast.error("Failed to mark as replied");
-    } finally {
-      setIsMarkingReplied(false);
-    }
-  };
 
   const handleSave = async () => {
     const updates = {
@@ -211,19 +194,10 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
         )}
       </TableCell>
       <TableCell className="flex flex-wrap gap-1">
-        {["sent", "followup_queued", "followup_sent"].includes(lead.status) && (
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={handleMarkReplied}
-            disabled={isMarkingReplied}
-          >
-            {isMarkingReplied ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              "Mark Replied"
-            )}
-          </Button>
+        {lead.hasReplied && lead.repliedAt && (
+          <span className="text-xs text-muted-foreground">
+            Replied: {formatDate(lead.repliedAt)}
+          </span>
         )}
         <Button
           size="icon"

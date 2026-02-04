@@ -16,7 +16,7 @@ export type LeadStatus =
 const TRANSITION_MAP: Record<LeadStatus, LeadStatus[]> = {
   draft: ["queued"],
   queued: ["sending", "failed"],
-  sending: ["sent", "failed", "queued", "followup_queued"],
+  sending: ["sent", "failed", "queued", "followup_queued", "followup_sent"],
   sent: ["followup_queued", "replied"],
   failed: ["queued", "draft"],
   followup_queued: ["sending", "replied"],
@@ -37,6 +37,9 @@ export type TransitionLeadAdditional = Partial<{
   followupSentAt: Date | null;
   lastSentAt: Date | null;
   lastError: string | null;
+  hasReplied: boolean;
+  repliedAt: Date | null;
+  outboundMessageId: string | null;
 }>;
 
 export async function transitionLead(
@@ -67,6 +70,12 @@ export async function transitionLead(
     updates.lastSentAt = additionalUpdates.lastSentAt;
   if (additionalUpdates?.lastError !== undefined)
     updates.lastError = additionalUpdates.lastError;
+  if (additionalUpdates?.hasReplied !== undefined)
+    updates.hasReplied = additionalUpdates.hasReplied;
+  if (additionalUpdates?.repliedAt !== undefined)
+    updates.repliedAt = additionalUpdates.repliedAt;
+  if (additionalUpdates?.outboundMessageId !== undefined)
+    updates.outboundMessageId = additionalUpdates.outboundMessageId;
 
   const [row] = await db
     .update(leads)

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:cron": "npx tsx scripts/cron-worker.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:cron\"",
+    "dev:outbound": "npx tsx scripts/outbound-worker.ts",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:outbound\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
