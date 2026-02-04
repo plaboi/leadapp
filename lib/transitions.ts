@@ -17,10 +17,10 @@ const TRANSITION_MAP: Record<LeadStatus, LeadStatus[]> = {
   draft: ["queued"],
   queued: ["sending", "failed"],
   sending: ["sent", "failed", "queued", "followup_queued", "followup_sent"],
-  sent: ["followup_queued", "replied"],
+  sent: ["followup_queued", "replied", "failed"], // Allow failed for bounces
   failed: ["queued", "draft"],
-  followup_queued: ["sending", "replied"],
-  followup_sent: ["replied"],
+  followup_queued: ["sending", "replied", "failed"], // Allow failed for bounces
+  followup_sent: ["replied", "failed"], // Allow failed for bounces
   replied: [],
   paused: ["draft", "queued"],
 };
