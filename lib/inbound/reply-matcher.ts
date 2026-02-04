@@ -11,6 +11,8 @@ export interface InboundEmail {
   from: string;
   to: string;
   subject: string;
+  emailId: string;
+  messageId?: string;
   inReplyTo?: string;
   text?: string;
 }
