@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Leads",
-  description: "Manage your leads with ease",
-};
+  title: "ALeadR",
+  description: "Autonomous AI-powered outreach tool that sends personalized sales emails, tracks replies, and automatically follows up",
+};//could fine tune the meta data later 
 
 export default function RootLayout({
   children,
@@ -25,11 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          {children}
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+            <Toaster />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

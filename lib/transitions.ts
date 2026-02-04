@@ -1,0 +1,78 @@
+import { eq, and } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { leads } from "@/lib/db/schema";
+
+export type LeadStatus =
+  | "draft"
+  | "queued"
+  | "sending"
+  | "sent"
+  | "failed"
+  | "replied"
+  | "followup_queued"
+  | "followup_sent"
+  | "paused";
+
+const TRANSITION_MAP: Record<LeadStatus, LeadStatus[]> = {
+  draft: ["queued"],
+  queued: ["sending", "failed"],
+  sending: ["sent", "failed", "queued", "followup_queued"],
+  sent: ["followup_queued", "replied"],
+  failed: ["queued", "draft"],
+  followup_queued: ["sending", "replied"],
+  followup_sent: ["replied"],
+  replied: [],
+  paused: ["draft", "queued"],
+};
+
+export function canTransition(
+  from: LeadStatus,
+  to: LeadStatus
+): boolean {
+  return TRANSITION_MAP[from]?.includes(to) ?? false;
+}
+
+export type TransitionLeadAdditional = Partial<{
+  initialSentAt: Date | null;
+  followupSentAt: Date | null;
+  lastSentAt: Date | null;
+  lastError: string | null;
+}>;
+
+export async function transitionLead(
+  leadId: string,
+  clerkUserId: string,
+  toStatus: LeadStatus,
+  additionalUpdates?: TransitionLeadAdditional
+): Promise<typeof leads.$inferSelect | null> {
+  const [current] = await db
+    .select({ status: leads.status })
+    .from(leads)
+    .where(and(eq(leads.id, leadId), eq(leads.clerkUserId, clerkUserId)))
+    .limit(1);
+
+  if (!current || !canTransition(current.status as LeadStatus, toStatus)) {
+    return null;
+  }
+
+  const updates: Partial<typeof leads.$inferInsert> = {
+    status: toStatus,
+    updatedAt: new Date(),
+  };
+  if (additionalUpdates?.initialSentAt !== undefined)
+    updates.initialSentAt = additionalUpdates.initialSentAt;
+  if (additionalUpdates?.followupSentAt !== undefined)
+    updates.followupSentAt = additionalUpdates.followupSentAt;
+  if (additionalUpdates?.lastSentAt !== undefined)
+    updates.lastSentAt = additionalUpdates.lastSentAt;
+  if (additionalUpdates?.lastError !== undefined)
+    updates.lastError = additionalUpdates.lastError;
+
+  const [row] = await db
+    .update(leads)
+    .set(updates)
+    .where(and(eq(leads.id, leadId), eq(leads.clerkUserId, clerkUserId)))
+    .returning();
+
+  return row ?? null;
+}

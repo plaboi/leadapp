@@ -1,38 +1,38 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { getLeadsByUser } from "@/lib/db/queries/leads";
+import { getCampaignSeedByUser } from "@/lib/db/queries/campaign-seeds";
+import { serializeLead } from "@/lib/api/leads-serializer";
+import { LeadsTable } from "@/components/leads/leads-table";
+import { CampaignSeedForm } from "@/components/campaign/campaign-seed-form";
 
-export default function LeadsPage() {
+export default async function LeadsPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const [rows, campaignSeed] = await Promise.all([
+    getLeadsByUser(userId),
+    getCampaignSeedByUser(userId),
+  ]);
+  const initialLeads = rows.map(serializeLead);
+  const initialSeed = campaignSeed
+    ? {
+        id: campaignSeed.id,
+        subject: campaignSeed.subject,
+        body: campaignSeed.body,
+        lockedAt: campaignSeed.lockedAt?.toISOString() ?? null,
+        createdAt: campaignSeed.createdAt?.toISOString() ?? null,
+        updatedAt: campaignSeed.updatedAt?.toISOString() ?? null,
+      }
+    : null;
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-      <Card className="mt-6">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                  No leads yet. Table placeholder.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <LeadsTable initialLeads={initialLeads} />
+      <CampaignSeedForm initialSeed={initialSeed} />
     </div>
   );
 }
