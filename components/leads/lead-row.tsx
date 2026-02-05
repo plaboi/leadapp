@@ -183,7 +183,8 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
       <TableCell className="space-y-1">
         <Badge variant={badgeVariant}>{formatStatus(lead.status)}</Badge>
         {lastSentAt && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground"
+        suppressHydrationWarning>
             Sent: {formatDate(lastSentAt)}
           </div>
         )}
@@ -195,7 +196,8 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
       </TableCell>
       <TableCell className="flex flex-wrap gap-1">
         {lead.hasReplied && lead.repliedAt && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground"
+        suppressHydrationWarning>
             Replied: {formatDate(lead.repliedAt)}
           </span>
         )}
