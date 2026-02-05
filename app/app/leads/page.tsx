@@ -24,6 +24,8 @@ export default async function LeadsPage() {
         subject: campaignSeed.subject,
         body: campaignSeed.body,
         lockedAt: campaignSeed.lockedAt?.toISOString() ?? null,
+        previewSubject: campaignSeed.previewSubject ?? null,
+        previewBody: campaignSeed.previewBody ?? null,
         createdAt: campaignSeed.createdAt?.toISOString() ?? null,
         updatedAt: campaignSeed.updatedAt?.toISOString() ?? null,
       }
@@ -32,12 +34,11 @@ export default async function LeadsPage() {
   return (
     <div className="p-6 bg-background text-foreground">
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">Leads</h1>
-      <div className="flex justify-end pr-1"> 
-        <RefreshButton />
-      </div>
-
       <div>
         <CampaignSeedForm initialSeed={initialSeed}/>
+        <div className="flex justify-end pr-1 mt-5"> 
+          <RefreshButton />
+        </div>
         <LeadsTable initialLeads={initialLeads} />
       </div>
     </div>

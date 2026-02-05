@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Lock, Loader2 } from "lucide-react";
+import { Lock, Loader2, Eye } from "lucide-react";
 import { campaignSeedSchema } from "@/lib/validations/campaign-seed";
 
 export type CampaignSeedApi = {
@@ -13,6 +13,8 @@ export type CampaignSeedApi = {
   subject: string | null;
   body: string;
   lockedAt: string | null;
+  previewSubject: string | null;
+  previewBody: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -29,6 +31,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
   const [isLocking, setIsLocking] = useState(false);
   const [showLockConfirm, setShowLockConfirm] = useState(false);
   const [isQueueing, setIsQueueing] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     setSeed(initialSeed);
@@ -103,7 +106,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
       
       if (data.workerAlreadyRunning) {
         toast.info(
-          `Worker already running. Queued ${data.enqueued} new lead(s).`
+          `Drafted Emails have been already queued. Refresh the page to see the updated status.`
         );
       } else {
         toast.success(
@@ -115,6 +118,24 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
       toast.error("Failed to start outbound worker");
     } finally {
       setIsQueueing(false);
+    }
+  };
+
+  const handleCheckEmail = async () => {
+    setIsChecking(true);
+    try {
+      const res = await fetch("/api/campaign-seed/check", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to generate preview");
+        return;
+      }
+      setSeed(data.seed);
+      toast.success("Preview generated");
+    } catch {
+      toast.error("Failed to generate campaign preview");
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -188,6 +209,20 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
                 )}
               </Button>
               <Button
+                onClick={handleCheckEmail}
+                disabled={isChecking}
+                variant="outline"
+              >
+                {isChecking ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <>
+                    <Eye className="size-4" />
+                    Check Campaign Email
+                  </>
+                )}
+              </Button>
+              <Button
                 onClick={() => setShowLockConfirm(true)}
                 disabled={isLocking}
               >
@@ -248,6 +283,33 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
           </div>
         )}
       </CardContent>
+
+      {/* Preview Panel - rendered between Campaign section and Leads table */}
+      <div className="mt-4 rounded-md border border-border bg-muted/30 p-4">
+        <h3 className="text-sm font-medium text-foreground mb-2">Email Preview</h3>
+        {seed?.previewSubject || seed?.previewBody ? (
+          <div className="space-y-3">
+            {seed.previewSubject && (
+              <div>
+                <span className="text-muted-foreground text-xs uppercase tracking-wide">Subject</span>
+                <p className="font-medium text-foreground mt-1">{seed.previewSubject}</p>
+              </div>
+            )}
+            {seed.previewBody && (
+              <div>
+                <span className="text-muted-foreground text-xs uppercase tracking-wide">Body</span>
+                <div className="whitespace-pre-wrap rounded bg-background border border-border p-3 text-sm text-foreground mt-1">
+                  {seed.previewBody}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm italic">
+            No preview generated yet. Click &quot;Check Campaign Email&quot; to generate a preview.
+          </p>
+        )}
+      </div>
     </Card>
   );
 }

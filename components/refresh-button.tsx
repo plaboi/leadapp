@@ -9,10 +9,16 @@ export function RefreshButton() {
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    router.refresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    
+    // Force a hard refresh of the page
+    window.location.reload();
+    
+    // Alternative: Use router.refresh() with proper cache invalidation
+    // router.refresh();
+    // await new Promise(resolve => setTimeout(resolve, 100));
+    // setIsRefreshing(false);
   };
 
   return (

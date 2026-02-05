@@ -25,6 +25,8 @@ export async function POST() {
         subject: seed.subject,
         body: seed.body,
         lockedAt: seed.lockedAt?.toISOString() ?? null,
+        previewSubject: seed.previewSubject ?? null,
+        previewBody: seed.previewBody ?? null,
         createdAt: seed.createdAt?.toISOString() ?? null,
         updatedAt: seed.updatedAt?.toISOString() ?? null,
       },

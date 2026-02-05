@@ -110,7 +110,7 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
   };
 
   return (
-    <Card className="mt-6 bg-card text-card-foreground">
+    <Card className="mt-2 bg-card text-card-foreground">
       <CardContent className="p-0">
         <Table>
           <TableHeader className="bg-muted">

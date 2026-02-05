@@ -62,6 +62,8 @@ export const campaignSeeds = pgTable("campaign_seeds", {
   subject: varchar("subject", { length: 500 }),
   body: text("body").notNull(),
   lockedAt: timestamp("locked_at"),
+  previewSubject: varchar("preview_subject", { length: 500 }),
+  previewBody: text("preview_body"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

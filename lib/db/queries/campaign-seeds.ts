@@ -68,3 +68,19 @@ export async function lockCampaignSeed(
     .returning();
   return row ?? null;
 }
+
+export async function updateCampaignSeedPreview(
+  clerkUserId: string,
+  data: { previewSubject: string; previewBody: string }
+): Promise<CampaignSeedRow | null> {
+  const [row] = await db
+    .update(campaignSeeds)
+    .set({
+      previewSubject: data.previewSubject,
+      previewBody: data.previewBody,
+      updatedAt: new Date(),
+    })
+    .where(eq(campaignSeeds.clerkUserId, clerkUserId))
+    .returning();
+  return row ?? null;
+}
