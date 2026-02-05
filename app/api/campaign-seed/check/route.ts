@@ -5,6 +5,7 @@ import {
   updateCampaignSeedPreview,
 } from "@/lib/db/queries/campaign-seeds";
 import { generateInitialEmail } from "@/lib/email/gemini";
+import { DUMMY_LEAD } from "@/lib/constants";
 
 
 
@@ -25,17 +26,10 @@ export async function POST() {
       );
     }
 
-    // Generate preview email using Gemini with a dummy lead 
-    const dummyLead = {
-      name: "Alex Taylor",
-      company: "Acme Corp",
-      position: "Head of Sales",
-      notes: "Leads a small B2B sales team",
-    };
-
+    // Generate preview email using Gemini with a dummy lead
     const generated = await generateInitialEmail(
       { subject: seed.subject, body: seed.body },
-      dummyLead
+      DUMMY_LEAD
     );
 
     // Update the campaign seed with the preview

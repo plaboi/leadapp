@@ -198,7 +198,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
               <Input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Email subject"
+                placeholder="Example: Quick idea for Acme Corp’s sales outreach"
                 maxLength={500}
               />
             </div>
@@ -256,7 +256,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
               
             </div>
             <p className="text-muted-foreground text-sm">
-              <span className="text-red-600 font-medium">'Make sure to 'Save draft' before reviewing or locking in your campaign.</span>
+              <span className="text-red-600 font-medium">'Make sure to 'Save draft' EACH TIME before reviewing or locking in your campaign.</span>
             </p>
           </>
         )}
@@ -288,30 +288,36 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
 
       {/* Preview Panel - rendered between Campaign section and Leads table */}
       <div className="mt-4 rounded-md border border-border bg-muted/30 p-4">
-        <h3 className="text-sm font-medium text-foreground mb-2">Email Preview</h3>
-        {seed?.previewSubject || seed?.previewBody ? (
-          <div className="space-y-3">
-            {seed.previewSubject && (
-              <div>
-                <span className="text-muted-foreground text-xs uppercase tracking-wide">Subject</span>
-                <p className="font-medium text-foreground mt-1">{seed.previewSubject}</p>
+      <h2 className="text-sm font-medium text-foreground mb-4">Email Preview</h2>
+      {seed?.previewSubject || seed?.previewBody ? (
+        <div className="rounded-md bg-background border border-border p-4 space-y-4">
+          {seed.previewSubject && (
+            <div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                Subject
               </div>
-            )}
-            {seed.previewBody && (
-              <div>
-                <span className="text-muted-foreground text-xs uppercase tracking-wide">Body</span>
-                <div className="whitespace-pre-wrap rounded bg-background border border-border p-3 text-sm text-foreground mt-1">
-                  {seed.previewBody}
-                </div>
+              <div className="text-base font-medium text-foreground">
+                {seed.previewSubject}
               </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm italic">
-            Preview how the AI sends your message, then optimise it before sending at scale.
-          </p>
-        )}
-      </div>
+            </div>
+          )}
+          {seed.previewBody && (
+            <div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                Body
+              </div>
+              <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {seed.previewBody}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm italic">
+          Preview how the AI sends your message, then optimise it before sending at scale.
+        </p>
+      )}
+    </div>
     </Card>
   );
 }
