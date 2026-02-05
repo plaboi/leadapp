@@ -21,10 +21,11 @@ import type { CampaignSeedApi } from "@/components/campaign/campaign-seed-form";
 
 type LeadsTableProps = {
   initialLeads: Lead[];
-  campaignSeed: CampaignSeedApi | null; // Add this prop
+  campaignSeed: CampaignSeedApi | null;
+  campaignSeedId?: string;
 };
 
-export function LeadsTable({ initialLeads, campaignSeed }: LeadsTableProps) {
+export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: LeadsTableProps) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
@@ -84,7 +85,11 @@ export function LeadsTable({ initialLeads, campaignSeed }: LeadsTableProps) {
     setNewNotes("");
 
     try {
-      const response = await fetch("/api/leads", {
+      // Use campaign-specific endpoint if we have a campaignSeedId
+      const endpoint = campaignSeedId 
+        ? `/api/campaigns/${campaignSeedId}/leads`
+        : "/api/leads";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -234,6 +239,7 @@ export function LeadsTable({ initialLeads, campaignSeed }: LeadsTableProps) {
           <div className="[&_button]:h-8 [&_button]:text-sm ">
             <QueueEmailsButton 
               isLocked={!!campaignSeed?.lockedAt}
+              campaignSeedId={campaignSeedId}
             />
           </div>
 

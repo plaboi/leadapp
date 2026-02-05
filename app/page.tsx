@@ -8,8 +8,8 @@ export default function Home() {
       <header className="absolute top-0 z-20 flex w-full items-center justify-between px-6 py-4">
         <span className="text-xl font-semibold text-white">ALeadR</span>
         <div className="flex gap-3">
-          <Button variant="ghost" className="bg-white/90 text-zinc-900 hover:bg-white" asChild>
-            <Link href="/sign-in">Get Started</Link>
+          <Button variant="ghost" className="bg-zinc-900 text-white hover:bg-zinc-400" asChild>
+            <Link href="/sign-in">Sign In</Link>
           </Button>
         </div>
       </header>
@@ -46,8 +46,9 @@ export default function Home() {
               one simple tool.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100" asChild>
-                <Link href="/sign-up">Get Started</Link>
+              <Button size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100 px-12 py-8 text-lg" asChild>
+                
+                <Link href="/sign-up">Sign Up</Link>
               </Button>
             </div>
           </div>

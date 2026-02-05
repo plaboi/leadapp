@@ -7,7 +7,7 @@ import {
   scheduleFollowup,
 } from "@/lib/db/queries/queue";
 import { getLead } from "@/lib/db/queries/leads";
-import { getCampaignSeedByUser } from "@/lib/db/queries/campaign-seeds";
+import { getCampaignSeedById } from "@/lib/db/queries/campaign-seeds";
 import {
   createGeneratedEmail,
   getLatestGeneratedEmailForLead,
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
         }
         await transitionLead(lead.id, job.clerkUserId, "sending");
 
-        const seed = await getCampaignSeedByUser(job.clerkUserId);
+        const seed = await getCampaignSeedById(lead.campaignSeedId, job.clerkUserId);
         if (!seed?.lockedAt) {
           console.log(`[Worker1] Campaign seed not locked for user ${job.clerkUserId}`);
           await transitionLead(lead.id, job.clerkUserId, "queued");

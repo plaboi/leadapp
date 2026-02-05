@@ -8,16 +8,22 @@ import { Loader2 } from "lucide-react";
 type QueueEmailsButtonProps = {
   isLocked: boolean;
   onQueueComplete?: () => void;
+  campaignSeedId?: string;
 };
 
-export function QueueEmailsButton({ isLocked, onQueueComplete }: QueueEmailsButtonProps) {
+export function QueueEmailsButton({ isLocked, onQueueComplete, campaignSeedId }: QueueEmailsButtonProps) {
   const [isQueueing, setIsQueueing] = useState(false);
 
   const handleQueueInitial = async () => {
     setIsQueueing(true);
     
     try {
-      const res = await fetch("/api/worker/outbound/start", { method: "POST" });
+      // Pass campaignSeedId in the request body if available
+      const res = await fetch("/api/worker/outbound/start", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignSeedId }),
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "Failed to start worker");

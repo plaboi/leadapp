@@ -30,11 +30,28 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Forward declaration for FK reference avoids repeating 
+export const campaignSeeds = pgTable("campaign_seeds", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 500 }),
+  body: text("body").notNull(),
+  lockedAt: timestamp("locked_at"),
+  previewSubject: varchar("preview_subject", { length: 500 }),
+  previewBody: text("preview_body"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const leads = pgTable(
   "leads",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull(),
+    campaignSeedId: uuid("campaign_seed_id")
+      .notNull()
+      .references(() => campaignSeeds.id),
     name: varchar("name", { length: 255 }).notNull(),
     email: varchar("email", { length: 255 }).notNull(),
     company: text("company"),
@@ -53,22 +70,11 @@ export const leads = pgTable(
   },
   (table) => [
     index("leads_clerk_user_id_idx").on(table.clerkUserId),
+    index("leads_campaign_seed_id_idx").on(table.campaignSeedId),
     index("leads_status_idx").on(table.status),
     index("leads_email_idx").on(table.email),
   ]
 );
-
-export const campaignSeeds = pgTable("campaign_seeds", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull().unique(),
-  subject: varchar("subject", { length: 500 }),
-  body: text("body").notNull(),
-  lockedAt: timestamp("locked_at"),
-  previewSubject: varchar("preview_subject", { length: 500 }),
-  previewBody: text("preview_body"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 
 export const emailEvents = pgTable(
   "email_events",

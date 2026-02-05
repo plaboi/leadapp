@@ -5,6 +5,28 @@ import type { CreateLeadInput, UpdateLeadInput } from "@/lib/validations/lead";
 
 export type LeadRow = typeof leads.$inferSelect;
 
+/**
+ * Get leads for a specific campaign
+ */
+export async function getLeadsByCampaign(
+  campaignSeedId: string,
+  clerkUserId: string
+): Promise<LeadRow[]> {
+  const rows = await db
+    .select()
+    .from(leads)
+    .where(
+      and(
+        eq(leads.campaignSeedId, campaignSeedId),
+        eq(leads.clerkUserId, clerkUserId)
+      )
+    );
+  return rows;
+}
+
+/**
+ * @deprecated Use getLeadsByCampaign instead
+ */
 export async function getLeadsByUser(clerkUserId: string): Promise<LeadRow[]> {
   const rows = await db
     .select()
@@ -13,6 +35,29 @@ export async function getLeadsByUser(clerkUserId: string): Promise<LeadRow[]> {
   return rows;
 }
 
+/**
+ * Get eligible draft leads for a specific campaign
+ */
+export async function getEligibleDraftLeadsByCampaign(
+  campaignSeedId: string,
+  clerkUserId: string
+): Promise<LeadRow[]> {
+  return db
+    .select()
+    .from(leads)
+    .where(
+      and(
+        eq(leads.campaignSeedId, campaignSeedId),
+        eq(leads.clerkUserId, clerkUserId),
+        eq(leads.status, "draft")
+      )
+    )
+    .orderBy(leads.createdAt);
+}
+
+/**
+ * @deprecated Use getEligibleDraftLeadsByCampaign instead
+ */
 export async function getEligibleDraftLeads(
   clerkUserId: string
 ): Promise<LeadRow[]> {
@@ -25,13 +70,42 @@ export async function getEligibleDraftLeads(
     .orderBy(leads.createdAt);
 }
 
-export async function createLead(
+/**
+ * Create a lead for a specific campaign
+ */
+export async function createLeadForCampaign(
+  campaignSeedId: string,
   clerkUserId: string,
   data: CreateLeadInput
 ): Promise<LeadRow> {
   const [row] = await db
     .insert(leads)
     .values({
+      campaignSeedId,
+      clerkUserId,
+      name: data.name,
+      email: data.email,
+      company: data.company ?? null,
+      position: data.position ?? null,
+      notes: data.notes ?? null,
+      status: "draft",
+    })
+    .returning();
+  if (!row) throw new Error("Failed to create lead");
+  return row;
+}
+
+/**
+ * @deprecated Use createLeadForCampaign instead
+ */
+export async function createLead(
+  clerkUserId: string,
+  data: CreateLeadInput & { campaignSeedId: string }
+): Promise<LeadRow> {
+  const [row] = await db
+    .insert(leads)
+    .values({
+      campaignSeedId: data.campaignSeedId,
       clerkUserId,
       name: data.name,
       email: data.email,

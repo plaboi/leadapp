@@ -1,0 +1,1 @@
+{"location":"route.ts:handleBounce:beforeTransition","message":"About to call transitionLead","data":{"leadId":"a769651c-ce90-42fe-a5a3-3f3561b34679","currentStatus":"followup_queued","targetStatus":"failed","clerkUserId":"user_39FbOZOEqA2J9x2E6ukpXok76Mv"},"timestamp":1770295381576,"sessionId":"debug-session","hypothesisId":"D"}

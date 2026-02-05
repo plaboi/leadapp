@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getCampaignSeedByUser } from "@/lib/db/queries/campaign-seeds";
-import { getEligibleDraftLeads } from "@/lib/db/queries/leads";
+import { getCampaignSeedByUser, getCampaignSeedById } from "@/lib/db/queries/campaign-seeds";
+import { getEligibleDraftLeads, getEligibleDraftLeadsByCampaign } from "@/lib/db/queries/leads";
 import { enqueueInitial } from "@/lib/db/queries/queue";
 import { transitionLead } from "@/lib/transitions";
 import {
@@ -9,18 +9,39 @@ import {
   isOutboundWorkerRunning,
 } from "@/lib/db/queries/worker-state";
 
-export async function POST() {
+export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Parse optional campaignSeedId from body
+  let campaignSeedId: string | undefined;
+  try {
+    const body = await request.json();
+    campaignSeedId = body.campaignSeedId;
+  } catch {
+    // No body or invalid JSON, campaignSeedId remains undefined
   }
 
   try {
     // Check if worker is already running
     const alreadyRunning = await isOutboundWorkerRunning();
 
-    // Check campaign seed is locked
-    const seed = await getCampaignSeedByUser(userId);
+    // Get campaign seed - either specific or default
+    let seed;
+    if (campaignSeedId) {
+      seed = await getCampaignSeedById(campaignSeedId, userId);
+      if (!seed) {
+        return NextResponse.json(
+          { error: "Campaign not found" },
+          { status: 404 }
+        );
+      }
+    } else {
+      seed = await getCampaignSeedByUser(userId);
+    }
+
     if (!seed?.lockedAt) {
       return NextResponse.json(
         { error: "Campaign seed must be locked before queueing emails" },
@@ -28,8 +49,10 @@ export async function POST() {
       );
     }
 
-    // Enqueue eligible draft leads
-    const drafts = await getEligibleDraftLeads(userId);
+    // Enqueue eligible draft leads - use campaign-specific query if campaignSeedId provided
+    const drafts = campaignSeedId 
+      ? await getEligibleDraftLeadsByCampaign(campaignSeedId, userId)
+      : await getEligibleDraftLeads(userId);
     const results: { leadId: string; enqueued: boolean; reason?: string }[] = [];
 
     for (const lead of drafts) {

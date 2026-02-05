@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Lock, Loader2, Eye } from "lucide-react";
 import { campaignSeedSchema } from "@/lib/validations/campaign-seed";
+import { DEFAULT_CAMPAIGN_BODY } from "@/lib/constants";
 
 export type CampaignSeedApi = {
   id: string;
+  name?: string;
   subject: string | null;
   body: string;
   lockedAt: string | null;
@@ -22,9 +24,10 @@ export type CampaignSeedApi = {
 type CampaignSeedFormProps = {
   initialSeed: CampaignSeedApi | null;
   onSeedChange?: (seed: CampaignSeedApi | null) => void;
+  campaignSeedId?: string;
 };
 
-export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedFormProps) {
+export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: CampaignSeedFormProps) {
   const [seed, setSeed] = useState<CampaignSeedApi | null>(initialSeed);
   const [subject, setSubject] = useState(initialSeed?.subject ?? "");
   const [body, setBody] = useState(initialSeed?.body ?? "");
@@ -50,7 +53,11 @@ export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedForm
     }
     setIsSaving(true);
     try {
-      const res = await fetch("/api/campaign-seed", {
+      // Use campaign-specific endpoint if we have a campaignSeedId, otherwise fall back to legacy
+      const endpoint = campaignSeedId 
+        ? `/api/campaigns/${campaignSeedId}/update`
+        : "/api/campaign-seed";
+      const res = await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -63,8 +70,9 @@ export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedForm
         toast.error(data.error ?? "Failed to save");
         return;
       }
-      setSeed(data.seed);
-      onSeedChange?.(data.seed);
+      const updatedSeed = data.campaign || data.seed;
+      setSeed(updatedSeed);
+      onSeedChange?.(updatedSeed);
       toast.success("Draft saved");
     } catch {
       toast.error("Failed to save draft");
@@ -77,16 +85,21 @@ export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedForm
     setIsLocking(true);
     setShowLockConfirm(false);
     try {
-      const res = await fetch("/api/campaign-seed/lock", { method: "POST" });
+      // Use campaign-specific endpoint if we have a campaignSeedId
+      const endpoint = campaignSeedId 
+        ? `/api/campaigns/${campaignSeedId}/lock`
+        : "/api/campaign-seed/lock";
+      const res = await fetch(endpoint, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "Failed to lock");
         return;
       }
-      setSeed(data.seed);
-      onSeedChange?.(data.seed);
-      setSubject(data.seed.subject ?? "");
-      setBody(data.seed.body);
+      const updatedSeed = data.campaign || data.seed;
+      setSeed(updatedSeed);
+      onSeedChange?.(updatedSeed);
+      setSubject(updatedSeed.subject ?? "");
+      setBody(updatedSeed.body);
       toast.success("Campaign locked");
     } catch {
       toast.error("Failed to lock campaign");
@@ -98,14 +111,19 @@ export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedForm
   const handleCheckEmail = async () => {
     setIsChecking(true);
     try {
-      const res = await fetch("/api/campaign-seed/check", { method: "POST" });
+      // Use campaign-specific endpoint if we have a campaignSeedId
+      const endpoint = campaignSeedId 
+        ? `/api/campaigns/${campaignSeedId}/check`
+        : "/api/campaign-seed/check";
+      const res = await fetch(endpoint, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "Failed to generate preview");
         return;
       }
-      setSeed(data.seed);
-      onSeedChange?.(data.seed);
+      const updatedSeed = data.campaign || data.seed;
+      setSeed(updatedSeed);
+      onSeedChange?.(updatedSeed);
       toast.success("Preview generated");
     } catch {
       toast.error("Failed to generate campaign preview");
@@ -167,7 +185,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedForm
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Your campaign message template..."
+                placeholder={DEFAULT_CAMPAIGN_BODY}
                 className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 maxLength={10000}
               />
