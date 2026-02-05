@@ -5,6 +5,7 @@ import { getCampaignSeedByUser } from "@/lib/db/queries/campaign-seeds";
 import { serializeLead } from "@/lib/api/leads-serializer";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { CampaignSeedForm } from "@/components/campaign/campaign-seed-form";
+import { RefreshButton } from "@/components/refresh-button";
 
 export default async function LeadsPage() {
   const { userId } = await auth();
@@ -29,10 +30,16 @@ export default async function LeadsPage() {
     : null;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-      <LeadsTable initialLeads={initialLeads} />
-      <CampaignSeedForm initialSeed={initialSeed} />
+    <div className="p-6 bg-background text-foreground">
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Leads</h1>
+      <div className="flex justify-end pr-1"> 
+        <RefreshButton />
+      </div>
+
+      <div>
+        <CampaignSeedForm initialSeed={initialSeed}/>
+        <LeadsTable initialLeads={initialLeads} />
+      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export async function POST() {
       return NextResponse.json(
         {
           error:
-            "No campaign seed found or it is already locked",
+            "Save a campaign seed first, then lock it",
         },
         { status: 400 }
       );

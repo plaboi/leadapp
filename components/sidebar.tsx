@@ -22,7 +22,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r bg-sidebar">
       <div className="flex h-14 items-center gap-2 border-b px-4">
         <Link href="/app" className="flex items-center gap-2 font-semibold">
-          <span className="text-lg">Leads</span>
+          <span className="text-lg">ALeadR</span>
         </Link>
       </div>
       <nav className="flex flex-1 flex-col gap-1 p-3">

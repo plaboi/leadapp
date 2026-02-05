@@ -110,16 +110,16 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
   };
 
   return (
-    <Card className="mt-6">
+    <Card className="mt-6 bg-card text-card-foreground">
       <CardContent className="p-0">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Notes</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="text-foreground">Name</TableHead>
+              <TableHead className="text-foreground">Email</TableHead>
+              <TableHead className="text-foreground">Notes</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="w-[80px] text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

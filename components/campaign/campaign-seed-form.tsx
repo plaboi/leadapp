@@ -119,9 +119,9 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
   };
 
   return (
-    <Card className="mt-8">
+    <Card className="mt-3 bg-card text-card-foreground">
       <CardHeader>
-        <h2 className="text-lg font-semibold">Campaign seed message</h2>
+        <h2 className="text-lg font-semibold text-foreground">Campaign seed message</h2>
         <p className="text-muted-foreground text-sm">
           Write a template for your outreach. Lock it before queueing emails.
           Once locked, it cannot be edited.
@@ -129,7 +129,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {isLocked ? (
-          <div className="space-y-3 rounded-md border bg-muted/30 p-4">
+          <div className="space-y-3 rounded-md border border-border bg-muted p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Lock className="size-4" />
               <span className="text-sm">
@@ -143,17 +143,17 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
             {seed?.subject && (
               <div>
                 <span className="text-muted-foreground text-sm">Subject: </span>
-                <span className="font-medium">{seed.subject}</span>
+                <span className="font-medium text-foreground">{seed.subject}</span>
               </div>
             )}
-            <div className="whitespace-pre-wrap rounded bg-background p-3 text-sm">
+            <div className="whitespace-pre-wrap rounded bg-muted/50 p-3 text-sm text-foreground">
               {seed?.body}
             </div>
           </div>
         ) : (
           <>
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 Subject (optional)
               </label>
               <Input
@@ -164,7 +164,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 Body (required, min 50 characters)
               </label>
               <textarea
@@ -206,7 +206,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
 
         {showLockConfirm && (
           <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-4">
-            <p className="mb-3 text-sm">
+            <p className="text-muted-foreground text-sm">
               Once locked, this message cannot be edited. Are you sure?
             </p>
             <div className="flex gap-2">
@@ -217,7 +217,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
               >
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleLockConfirm} disabled={isLocking}>
+              <Button size="sm" onClick={handleLockConfirm} disabled={isLocking} className="bg-blue-700 hover:bg-blue-800 text-white">
                 {isLocking ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
@@ -234,6 +234,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
               onClick={handleQueueInitial}
               disabled={isQueueing}
               variant="secondary"
+              className="bg-black hover:bg-black/80 text-white border-gray-400"
             >
               {isQueueing ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -241,9 +242,8 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
                 "Queue Emails"
               )}
             </Button>
-            <p className="mt-1 text-muted-foreground text-xs">
-              Starts the outbound worker and queues all draft leads. Worker auto-stops 
-              after 3 empty ticks. Replies are detected automatically via webhook.
+            <p className="text-muted-foreground text-sm">
+              Send out the 'Draft' Leads
             </p>
           </div>
         )}
