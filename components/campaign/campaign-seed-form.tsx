@@ -81,6 +81,20 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
     }
   };
 
+  const handleLockClick = () => {
+    // Guard: no draft saved yet
+    if (!seed?.id) {
+      toast.error("Press 'Save Draft' before pressing 'Lock campaign'.");
+      return;
+    }
+    // Guard: body is empty/whitespace
+    if (!seed.body?.trim()) {
+      toast.error("Add a campaign message, then press 'Save Draft' before pressing 'Lock campaign'.");
+      return;
+    }
+    setShowLockConfirm(true);
+  };
+
   const handleLockConfirm = async () => {
     setIsLocking(true);
     setShowLockConfirm(false);
@@ -109,6 +123,16 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
   };
 
   const handleCheckEmail = async () => {
+    // Guard: no draft saved yet
+    if (!seed?.id) {
+      toast.error("Press 'Save Draft' before pressing 'AI Preview'.");
+      return;
+    }
+    // Guard: body is empty/whitespace
+    if (!seed.body?.trim()) {
+      toast.error("Add a campaign message, then press 'Save Draft' before pressing 'AI Preview'.");
+      return;
+    }
     setIsChecking(true);
     try {
       // Use campaign-specific endpoint if we have a campaignSeedId
@@ -137,9 +161,9 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
       <CardHeader>
         <h2 className="text-lg font-semibold text-foreground">Your Outreach Template</h2>
         <p className="text-muted-foreground text-sm">
-          Write your message once and send it to multiple leads.
-          Preview how the AI will send it, make any tweaks, then lock the campaign when you're happy.
-          Once locked, the message is ready to send. To change the message, simply create a new campaign.
+        <span className="font-bold">Step 1: </span><span className="text-blue-600 font-medium">Write your outreach message  </span>
+        <span className="font-bold">Step 2: </span><span className="text-blue-600 font-medium">Preview how AI rewrites it</span> and refine if needed  
+        <span className="font-bold">   Step 3: </span><span className="text-blue-600 font-medium">Lock it in</span> <span className="text-red-600 font-medium">(no edits after this)</span>, then add leads and send
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -217,7 +241,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
                 )}
               </Button>
               <Button
-                onClick={() => setShowLockConfirm(true)}
+                onClick={handleLockClick}
                 disabled={isLocking}
               >
                 {isLocking ? (
@@ -229,7 +253,11 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
                   </>
                 )}
               </Button>
+              
             </div>
+            <p className="text-muted-foreground text-sm">
+              <span className="text-red-600 font-medium">'Make sure to 'Save draft' before reviewing or locking in your campaign.</span>
+            </p>
           </>
         )}
 

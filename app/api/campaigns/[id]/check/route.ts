@@ -11,6 +11,8 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+
+
 /**
  * POST /api/campaigns/[id]/check
  * Generate a preview email for a specific campaign
@@ -39,7 +41,7 @@ export async function POST(_request: Request, { params }: Props) {
       name: "Alex Taylor",
       company: "Acme Corp",
       position: "Head of Sales",
-      notes: "Met at conference",
+      notes: "Leads a small B2B sales team",
     };
 
     const generated = await generateInitialEmail(

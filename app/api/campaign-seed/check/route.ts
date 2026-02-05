@@ -6,6 +6,8 @@ import {
 } from "@/lib/db/queries/campaign-seeds";
 import { generateInitialEmail } from "@/lib/email/gemini";
 
+
+
 export async function POST() {
   const { userId } = await auth();
   if (!userId) {
@@ -28,7 +30,7 @@ export async function POST() {
       name: "Alex Taylor",
       company: "Acme Corp",
       position: "Head of Sales",
-      notes: "Met at conference",
+      notes: "Leads a small B2B sales team",
     };
 
     const generated = await generateInitialEmail(
