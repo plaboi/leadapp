@@ -37,6 +37,8 @@ export const leads = pgTable(
     clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     email: varchar("email", { length: 255 }).notNull(),
+    company: text("company"),
+    position: text("position"),
     notes: text("notes"),
     status: leadStatusEnum("status").notNull().default("draft"),
     lastSentAt: timestamp("last_sent_at"),

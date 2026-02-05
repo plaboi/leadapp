@@ -119,7 +119,7 @@ export async function POST(request: Request) {
           console.log(`[Worker1] Generating initial email for lead ${lead.id}`);
           const generated = await generateInitialEmail(
             { subject: seed.subject, body: seed.body },
-            { name: lead.name, notes: lead.notes }
+            { name: lead.name, company: lead.company, position: lead.position, notes: lead.notes }
           );
           subject = generated.subject;
           body = generated.body;

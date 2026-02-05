@@ -21,16 +21,16 @@ export type CampaignSeedApi = {
 
 type CampaignSeedFormProps = {
   initialSeed: CampaignSeedApi | null;
+  onSeedChange?: (seed: CampaignSeedApi | null) => void;
 };
 
-export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
+export function CampaignSeedForm({ initialSeed, onSeedChange }: CampaignSeedFormProps) {
   const [seed, setSeed] = useState<CampaignSeedApi | null>(initialSeed);
   const [subject, setSubject] = useState(initialSeed?.subject ?? "");
   const [body, setBody] = useState(initialSeed?.body ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
   const [showLockConfirm, setShowLockConfirm] = useState(false);
-  const [isQueueing, setIsQueueing] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
@@ -64,6 +64,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
         return;
       }
       setSeed(data.seed);
+      onSeedChange?.(data.seed);
       toast.success("Draft saved");
     } catch {
       toast.error("Failed to save draft");
@@ -83,6 +84,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
         return;
       }
       setSeed(data.seed);
+      onSeedChange?.(data.seed);
       setSubject(data.seed.subject ?? "");
       setBody(data.seed.body);
       toast.success("Campaign locked");
@@ -90,34 +92,6 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
       toast.error("Failed to lock campaign");
     } finally {
       setIsLocking(false);
-    }
-  };
-
-  const handleQueueInitial = async () => {
-    setIsQueueing(true);
-    
-    try {
-      const res = await fetch("/api/worker/outbound/start", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Failed to start worker");
-        return;
-      }
-      
-      if (data.workerAlreadyRunning) {
-        toast.info(
-          `Drafted Emails have been already queued. Refresh the page to see the updated status.`
-        );
-      } else {
-        toast.success(
-          `Worker started. Queued ${data.enqueued} lead(s). ${data.skipped} skipped.`
-        );
-      }
-      window.location.reload();
-    } catch {
-      toast.error("Failed to start outbound worker");
-    } finally {
-      setIsQueueing(false);
     }
   };
 
@@ -131,6 +105,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
         return;
       }
       setSeed(data.seed);
+      onSeedChange?.(data.seed);
       toast.success("Preview generated");
     } catch {
       toast.error("Failed to generate campaign preview");
@@ -142,10 +117,11 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
   return (
     <Card className="mt-3 bg-card text-card-foreground">
       <CardHeader>
-        <h2 className="text-lg font-semibold text-foreground">Campaign seed message</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your Outreach Template</h2>
         <p className="text-muted-foreground text-sm">
-          Write a template for your outreach. Lock it before queueing emails.
-          Once locked, it cannot be edited.
+          Write your message once and send it to multiple leads.
+          Preview how the AI will send it, make any tweaks, then lock the campaign when you're happy.
+          Once locked, the message is ready to send. To change the message, simply create a new campaign.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -218,7 +194,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
                 ) : (
                   <>
                     <Eye className="size-4" />
-                    Check Campaign Email
+                    AI Preview
                   </>
                 )}
               </Button>
@@ -262,26 +238,6 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
             </div>
           </div>
         )}
-
-        {isLocked && (
-          <div className="pt-2">
-            <Button
-              onClick={handleQueueInitial}
-              disabled={isQueueing}
-              variant="secondary"
-              className="bg-black hover:bg-black/80 text-white border-gray-400"
-            >
-              {isQueueing ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                "Queue Emails"
-              )}
-            </Button>
-            <p className="text-muted-foreground text-sm">
-              Send out the 'Draft' Leads
-            </p>
-          </div>
-        )}
       </CardContent>
 
       {/* Preview Panel - rendered between Campaign section and Leads table */}
@@ -306,7 +262,7 @@ export function CampaignSeedForm({ initialSeed }: CampaignSeedFormProps) {
           </div>
         ) : (
           <p className="text-muted-foreground text-sm italic">
-            No preview generated yet. Click &quot;Check Campaign Email&quot; to generate a preview.
+            Preview how the AI sends your message, then optimise it before sending at scale.
           </p>
         )}
       </div>

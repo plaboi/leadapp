@@ -29,6 +29,13 @@
       "when": 1770274860845,
       "tag": "0003_silly_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770284876646,
+      "tag": "0004_quiet_magma",
+      "breakpoints": true
     }
   ]
 }

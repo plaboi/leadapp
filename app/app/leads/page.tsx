@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { getLeadsByUser } from "@/lib/db/queries/leads";
 import { getCampaignSeedByUser } from "@/lib/db/queries/campaign-seeds";
 import { serializeLead } from "@/lib/api/leads-serializer";
-import { LeadsTable } from "@/components/leads/leads-table";
-import { CampaignSeedForm } from "@/components/campaign/campaign-seed-form";
+import { LeadsClientWrapper } from "@/components/leads/leads-client-wrapper";
 import { RefreshButton } from "@/components/refresh-button";
 
 export default async function LeadsPage() {
@@ -33,13 +32,12 @@ export default async function LeadsPage() {
 
   return (
     <div className="p-6 bg-background text-foreground">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Leads</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Campaign 1</h1>
       <div>
-        <CampaignSeedForm initialSeed={initialSeed}/>
+        <LeadsClientWrapper initialSeed={initialSeed} initialLeads={initialLeads} />
         <div className="flex justify-end pr-1 mt-5"> 
           <RefreshButton />
         </div>
-        <LeadsTable initialLeads={initialLeads} />
       </div>
     </div>
   );

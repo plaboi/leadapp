@@ -16,18 +16,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LeadRow, type Lead } from "./lead-row";
 import { Plus, Loader2 } from "lucide-react";
 import { emailSchema } from "@/lib/validations/lead";
-
-
+import { QueueEmailsButton } from "@/components/campaign/QueueEmailsButton";
+import type { CampaignSeedApi } from "@/components/campaign/campaign-seed-form";
 
 type LeadsTableProps = {
   initialLeads: Lead[];
+  campaignSeed: CampaignSeedApi | null; // Add this prop
 };
 
-export function LeadsTable({ initialLeads }: LeadsTableProps) {
+export function LeadsTable({ initialLeads, campaignSeed }: LeadsTableProps) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newCompany, setNewCompany] = useState("");
+  const [newPosition, setNewPosition] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,13 +57,14 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
       return;
     }
 
-
     setIsSubmitting(true);
     const tempId = `temp-${Date.now()}`;
     const optimisticLead: Lead = {
       id: tempId,
       name,
       email,
+      company: newCompany.trim() || null,
+      position: newPosition.trim() || null,
       notes: newNotes.trim() || null,
       status: "draft",
       initialSentAt: null,
@@ -75,6 +79,8 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
     setIsAddingNew(false);
     setNewName("");
     setNewEmail("");
+    setNewCompany("");
+    setNewPosition("");
     setNewNotes("");
 
     try {
@@ -84,6 +90,8 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
         body: JSON.stringify({
           name,
           email,
+          company: newCompany.trim() || undefined,
+          position: newPosition.trim() || undefined,
           notes: newNotes.trim() || undefined,
         }),
       });
@@ -106,6 +114,8 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
     setIsAddingNew(false);
     setNewName("");
     setNewEmail("");
+    setNewCompany("");
+    setNewPosition("");
     setNewNotes("");
   };
 
@@ -117,6 +127,8 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
             <TableRow>
               <TableHead className="text-foreground">Name</TableHead>
               <TableHead className="text-foreground">Email</TableHead>
+              <TableHead className="text-foreground">Company</TableHead>
+              <TableHead className="text-foreground">Position</TableHead>
               <TableHead className="text-foreground">Notes</TableHead>
               <TableHead className="text-foreground">Status</TableHead>
               <TableHead className="w-[80px] text-foreground">Actions</TableHead>
@@ -129,7 +141,7 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
                   <Input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Name"
+                    placeholder="Alex Taylor"
                     className="h-8"
                   />
                 </TableCell>
@@ -138,7 +150,23 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="Email"
+                    placeholder="alex.taylor@example.com"
+                    className="h-8"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={newCompany}
+                    onChange={(e) => setNewCompany(e.target.value)}
+                    placeholder="Acme Corp"
+                    className="h-8"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={newPosition}
+                    onChange={(e) => setNewPosition(e.target.value)}
+                    placeholder="Head of Sales"
                     className="h-8"
                   />
                 </TableCell>
@@ -146,7 +174,7 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
                   <Input
                     value={newNotes}
                     onChange={(e) => setNewNotes(e.target.value)}
-                    placeholder="Notes"
+                    placeholder="Met at conference"
                     className="h-8"
                   />
                 </TableCell>
@@ -184,16 +212,16 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
             {!isAddingNew && leads.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={7}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  No leads yet. Click &quot;Add lead&quot; to create one.
+                  Ready to add your first contact? Click &quot;Add lead&quot; below.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        <div className="border-t p-2">
+        <div className="flex items-center justify-between pr-4">
           <Button
             variant="outline"
             size="sm"
@@ -203,6 +231,13 @@ export function LeadsTable({ initialLeads }: LeadsTableProps) {
             <Plus className="size-4 mr-1" />
             Add lead
           </Button>
+          <div className="[&_button]:h-8 [&_button]:text-sm ">
+            <QueueEmailsButton 
+              isLocked={!!campaignSeed?.lockedAt}
+            />
+          </div>
+
+
         </div>
       </CardContent>
     </Card>

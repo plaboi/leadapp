@@ -31,7 +31,7 @@ function parseJsonResponse(text: string): GeneratedEmail {
 
 export async function generateInitialEmail(
   campaignSeed: { subject?: string | null; body: string },
-  lead: { name: string; notes?: string | null }
+  lead: { name: string; company?: string | null; position?: string | null; notes?: string | null }
 ): Promise<GeneratedEmail> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set");

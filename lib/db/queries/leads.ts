@@ -35,6 +35,8 @@ export async function createLead(
       clerkUserId,
       name: data.name,
       email: data.email,
+      company: data.company ?? null,
+      position: data.position ?? null,
       notes: data.notes ?? null,
       status: "draft",
     })
@@ -68,6 +70,8 @@ export async function updateLead(
   };
   if (data.name !== undefined) updates.name = data.name;
   if (data.email !== undefined) updates.email = data.email;
+  if (data.company !== undefined) updates.company = data.company || null;
+  if (data.position !== undefined) updates.position = data.position || null;
   if (data.notes !== undefined) updates.notes = data.notes;
 
   const [row] = await db

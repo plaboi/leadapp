@@ -15,6 +15,8 @@ export type Lead = {
   id: string;
   name: string;
   email: string;
+  company: string | null;
+  position: string | null;
   notes: string | null;
   status: string;
   initialSentAt: string | null;
@@ -67,15 +69,25 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(lead.name);
   const [email, setEmail] = useState(lead.email);
+  const [company, setCompany] = useState(lead.company ?? "");
+  const [position, setPosition] = useState(lead.position ?? "");
   const [notes, setNotes] = useState(lead.notes ?? "");
 
   const handleSave = async () => {
     const updates = {
       name: name.trim(),
       email: email.trim(),
+      company: company.trim() || undefined,
+      position: position.trim() || undefined,
       notes: notes.trim() || undefined,
     };
-    if (updates.name === lead.name && updates.email === lead.email && (updates.notes ?? "") === (lead.notes ?? "")) {
+    const noChanges = 
+      updates.name === lead.name && 
+      updates.email === lead.email && 
+      (updates.company ?? "") === (lead.company ?? "") &&
+      (updates.position ?? "") === (lead.position ?? "") &&
+      (updates.notes ?? "") === (lead.notes ?? "");
+    if (noChanges) {
       setIsEditing(false);
       return;
     }
@@ -109,6 +121,8 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
   const handleCancel = () => {
     setName(lead.name);
     setEmail(lead.email);
+    setCompany(lead.company ?? "");
+    setPosition(lead.position ?? "");
     setNotes(lead.notes ?? "");
     setIsEditing(false);
   };
@@ -130,6 +144,22 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            className="h-8"
+          />
+        </TableCell>
+        <TableCell>
+          <Input
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            placeholder="Company"
+            className="h-8"
+          />
+        </TableCell>
+        <TableCell>
+          <Input
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+            placeholder="Position"
             className="h-8"
           />
         </TableCell>
@@ -179,6 +209,8 @@ export function LeadRow({ lead, onUpdate }: LeadRowProps) {
     >
       <TableCell>{lead.name}</TableCell>
       <TableCell>{lead.email}</TableCell>
+      <TableCell className="max-w-[150px] truncate">{lead.company ?? "—"}</TableCell>
+      <TableCell className="max-w-[150px] truncate">{lead.position ?? "—"}</TableCell>
       <TableCell className="max-w-[200px] truncate">{lead.notes ?? "—"}</TableCell>
       <TableCell className="space-y-1">
         <Badge variant={badgeVariant}>{formatStatus(lead.status)}</Badge>

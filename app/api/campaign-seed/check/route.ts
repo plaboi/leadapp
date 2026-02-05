@@ -23,10 +23,12 @@ export async function POST() {
       );
     }
 
-    // Generate preview email using Gemini with a dummy lead
+    // Generate preview email using Gemini with a dummy lead 
     const dummyLead = {
-      name: "Example Prospect",
-      notes: "Sample lead for preview generation",
+      name: "Alex Taylor",
+      company: "Acme Corp",
+      position: "Head of Sales",
+      notes: "Met at conference",
     };
 
     const generated = await generateInitialEmail(

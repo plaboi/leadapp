@@ -4,6 +4,8 @@ export type LeadApi = {
   id: string;
   name: string;
   email: string;
+  company: string | null;
+  position: string | null;
   notes: string | null;
   status: string;
   initialSentAt: string | null;
@@ -24,6 +26,8 @@ export function serializeLead(row: LeadRow): LeadApi {
     id: row.id,
     name: row.name,
     email: row.email,
+    company: row.company ?? null,
+    position: row.position ?? null,
     notes: row.notes,
     status: row.status,
     initialSentAt: row.initialSentAt ? toIso(row.initialSentAt) : null,

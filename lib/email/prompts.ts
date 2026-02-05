@@ -1,6 +1,6 @@
 export function buildInitialEmailPrompt(
   campaignSeed: { subject?: string | null; body: string },
-  lead: { name: string; notes?: string | null }
+  lead: { name: string; company?: string | null; position?: string | null; notes?: string | null }
 ): string {
   return `You are an email copywriter. Generate a personalized cold outreach email.
 
@@ -11,14 +11,18 @@ ${campaignSeed.body}
 
 RECIPIENT:
 Name: ${lead.name}
+Company: ${lead.company ?? "Not specified"}
+Position: ${lead.position ?? "Not specified"}
 Notes: ${lead.notes ?? "No additional context"}
 
 INSTRUCTIONS:
-1. Personalize the email based on the recipient's name and notes
-2. Keep the core message and value proposition from the template
-3. Make it feel personal, not templated
-4. Keep it concise (under 150 words for body)
-5. Do not include [brackets] or placeholders in output
+1. Personalize the email based on the recipient's name, company, position, and notes when available
+2. If company or position are provided, use them naturally for context (e.g., referencing their role or company)
+3. Keep the core message and value proposition from the template
+4. Make it feel personal, not templated
+5. Keep it concise (under 150 words for body)
+6. Do not include [brackets] or placeholders in output
+7. Do not make up or assume company/position details if not provided
 
 OUTPUT FORMAT (JSON only, no markdown):
 {
