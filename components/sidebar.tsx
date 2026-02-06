@@ -34,7 +34,7 @@ export function Sidebar() {
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Fetch campaigns on mount
+  // Fetch campaigns on mount and when pathname changes (e.g., after creating a campaign)
   useEffect(() => {
     async function fetchCampaigns() {
       try {
@@ -50,7 +50,7 @@ export function Sidebar() {
       }
     }
     fetchCampaigns();
-  }, []);
+  }, [pathname]);
 
   const handleCreateCampaign = async () => {
     setIsCreating(true);

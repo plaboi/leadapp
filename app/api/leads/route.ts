@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getLeadsByUser, createLeadForCampaign } from "@/lib/db/queries/leads";
-import { getDefaultCampaignSeed, createCampaignSeed } from "@/lib/db/queries/campaign-seeds";
+import { getDefaultCampaignSeed } from "@/lib/db/queries/campaign-seeds";
 import { createLeadSchema } from "@/lib/validations/lead";
 import { serializeLead } from "@/lib/api/leads-serializer";
 
@@ -55,14 +55,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Get or create default campaign for this user
-    let defaultCampaign = await getDefaultCampaignSeed(userId);
+    // Get default campaign for this user (do NOT auto-create)
+    const defaultCampaign = await getDefaultCampaignSeed(userId);
     if (!defaultCampaign) {
-      // Create with empty body - placeholder will show in form
-      defaultCampaign = await createCampaignSeed(userId, {
-        name: "Campaign 1",
-        body: "",
-      });
+      return NextResponse.json(
+        { error: "No campaign exists. Create a campaign first." },
+        { status: 400 }
+      );
     }
 
     const lead = await createLeadForCampaign(defaultCampaign.id, userId, parsed.data);

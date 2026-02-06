@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Table,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { LeadRow, type Lead } from "./lead-row";
+import { ImportLeadsDropzone } from "./import-leads-dropzone";
 import { Plus, Loader2 } from "lucide-react";
 import { emailSchema } from "@/lib/validations/lead";
 import { QueueEmailsButton } from "@/components/campaign/QueueEmailsButton";
@@ -123,6 +124,10 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
     setNewPosition("");
     setNewNotes("");
   };
+
+  const handleImportComplete = useCallback((importedLeads: Lead[]) => {
+    setLeads((prev) => [...importedLeads, ...prev]);
+  }, []);
 
   return (
     <Card className="mt-2 bg-card text-card-foreground">
@@ -242,9 +247,16 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
               campaignSeedId={campaignSeedId}
             />
           </div>
-
-
         </div>
+        {campaignSeedId && (
+          <div className="px-4 pb-4">
+            <ImportLeadsDropzone
+              campaignSeedId={campaignSeedId}
+              onImportComplete={handleImportComplete}
+            />
+          </div>
+          //put message here for the table 
+        )}
       </CardContent>
     </Card>
   );

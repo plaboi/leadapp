@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getDefaultCampaignSeed, createCampaignSeed } from "@/lib/db/queries/campaign-seeds";
+import { getDefaultCampaignSeed } from "@/lib/db/queries/campaign-seeds";
 
 /**
  * Legacy /app/leads route - redirects to the default campaign
- * or creates one if it doesn't exist
+ * or to /app if no campaigns exist (empty state handled there)
  */
 export default async function LeadsPage() {
   const { userId } = await auth();
@@ -12,15 +12,12 @@ export default async function LeadsPage() {
     redirect("/sign-in");
   }
 
-  // Get or create default campaign
-  let defaultCampaign = await getDefaultCampaignSeed(userId);
+  // Get default campaign (do NOT auto-create)
+  const defaultCampaign = await getDefaultCampaignSeed(userId);
   
   if (!defaultCampaign) {
-    // Create a default campaign for new users with empty body
-    defaultCampaign = await createCampaignSeed(userId, {
-      name: "Campaign 1",
-      body: "", // Empty body - placeholder will show in form
-    });
+    // No campaigns - let /app handle the empty state
+    redirect("/app");
   }
 
   // Redirect to the campaign-specific page

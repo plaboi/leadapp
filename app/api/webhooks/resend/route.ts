@@ -74,6 +74,40 @@ interface ResendBouncePayload {
   };
 }
 
+// Resend webhook payload structure for email.delivery_delayed events
+interface ResendDeliveryDelayedPayload {
+  type: "email.delivery_delayed";
+  created_at: string;
+  data: {
+    email_id: string;
+    from: string;
+    to: string[];
+    subject: string;
+  };
+}
+
+/**
+ * Cancel an email on Resend's side to stop retry attempts
+ */
+async function cancelEmailOnResend(emailId: string): Promise<boolean> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    console.log("[Worker2] No RESEND_API_KEY, cannot cancel email");
+    return false;
+  }
+  
+  try {
+    const resend = new Resend(resendApiKey);
+    await resend.emails.cancel(emailId);
+    console.log(`[Worker2] Cancelled email ${emailId} on Resend`);
+    return true;
+  } catch (err) {
+    // May fail if already delivered/cancelled - that's OK
+    console.log(`[Worker2] Could not cancel email ${emailId}:`, err);
+    return false;
+  }
+}
+
 function verifyWebhookSignature(
   payload: string,
   signature: string | null,
@@ -133,6 +167,11 @@ export async function POST(request: Request) {
   // Handle email.bounced events
   if (payload.type === "email.bounced") {
     return handleBounce(payload as unknown as ResendBouncePayload);
+  }
+
+  // Handle email.delivery_delayed events
+  if (payload.type === "email.delivery_delayed") {
+    return handleDeliveryDelayed(payload as unknown as ResendDeliveryDelayedPayload);
   }
 
   // Only process email.received events (inbound emails) from here on
@@ -251,6 +290,9 @@ async function handleBounce(payload: ResendBouncePayload): Promise<Response> {
   console.log(`[Worker2] Bounce type: ${bounce.type}, subType: ${bounce.subType}`);
   console.log(`[Worker2] Bounce message: ${bounce.message}`);
 
+  // Cancel the email on Resend to stop retry attempts
+  await cancelEmailOnResend(email_id);
+
   // Find lead by the outboundMessageId we stored when sending
   let lead = await findLeadByOutboundMessageId(email_id);
   
@@ -260,9 +302,6 @@ async function handleBounce(payload: ResendBouncePayload): Promise<Response> {
     if (recipientEmail) {
       console.log(`[Worker2] No lead found by email_id, trying recipient email: ${recipientEmail}`);
       lead = await findLeadByEmail(recipientEmail);
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/c8115e02-cbfd-4c54-ba23-8b66dbebc0b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'route.ts:handleBounce:findByEmail',message:'findLeadByEmail fallback result',data:{recipientEmail,found:!!lead,leadId:lead?.id,leadStatus:lead?.status},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
     }
   }
   
@@ -290,11 +329,7 @@ async function handleBounce(payload: ResendBouncePayload): Promise<Response> {
     // Mark lead as failed with bounce info
     const errorMessage = `${bounce.type} bounce: ${bounce.message}`;
     
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/c8115e02-cbfd-4c54-ba23-8b66dbebc0b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'route.ts:handleBounce:beforeTransition',message:'About to call transitionLead',data:{leadId:lead.id,currentStatus:lead.status,targetStatus:'failed',clerkUserId:lead.clerkUserId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-    
-    const transitionResult = await transitionLead(lead.id, lead.clerkUserId, "failed", {
+    await transitionLead(lead.id, lead.clerkUserId, "failed", {
       lastError: errorMessage,
     });
     
@@ -322,6 +357,86 @@ async function handleBounce(payload: ResendBouncePayload): Promise<Response> {
     console.error("[Worker2] Error processing bounce:", error);
     return NextResponse.json(
       { error: "Failed to process bounce" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Handle email delivery delayed events from Resend
+ * Cancels the email on Resend and marks the lead as failed
+ */
+async function handleDeliveryDelayed(payload: ResendDeliveryDelayedPayload): Promise<Response> {
+  const { email_id, to } = payload.data;
+  
+  console.log(`[Worker2] Processing delivery_delayed for email_id: ${email_id}`);
+
+  // Cancel the email on Resend to stop retry attempts
+  await cancelEmailOnResend(email_id);
+
+  // Find lead by the outboundMessageId we stored when sending
+  let lead = await findLeadByOutboundMessageId(email_id);
+  
+  if (!lead) {
+    // Fallback: try to find by recipient email
+    const recipientEmail = to[0]?.toLowerCase();
+    if (recipientEmail) {
+      console.log(`[Worker2] No lead found by email_id, trying recipient email: ${recipientEmail}`);
+      lead = await findLeadByEmail(recipientEmail);
+    }
+  }
+  
+  if (!lead) {
+    console.log(`[Worker2] No lead found for delayed email_id: ${email_id}`);
+    return NextResponse.json({ 
+      received: true, 
+      processed: false, 
+      reason: "no_matching_lead" 
+    });
+  }
+
+  // Check if already failed
+  if (lead.status === "failed") {
+    console.log(`[Worker2] Lead ${lead.id} already marked as failed`);
+    return NextResponse.json({ 
+      received: true, 
+      processed: false, 
+      reason: "already_failed",
+      leadId: lead.id 
+    });
+  }
+
+  try {
+    // Mark lead as failed
+    const errorMessage = "Delivery delayed - email cancelled";
+    
+    await transitionLead(lead.id, lead.clerkUserId, "failed", {
+      lastError: errorMessage,
+    });
+    
+    // Cancel any scheduled follow-ups
+    const cancelledCount = await cancelFollowupJobsForLead(lead.id, lead.clerkUserId);
+    console.log(`[Worker2] Cancelled ${cancelledCount} followup job(s) for lead ${lead.id}`);
+    
+    // Log the event
+    await createEmailEvent({
+      leadId: lead.id,
+      clerkUserId: lead.clerkUserId,
+      type: "failed",
+      providerMessageId: email_id,
+      payloadJson: { reason: "delivery_delayed" },
+    });
+    
+    console.log(`[Worker2] Lead ${lead.id} marked as failed due to delivery delay`);
+    return NextResponse.json({ 
+      received: true, 
+      processed: true, 
+      leadId: lead.id,
+    });
+  } catch (error) {
+    console.error("[Worker2] Error processing delivery delay:", error);
+    return NextResponse.json(
+      { error: "Failed to process delivery delay" },
       { status: 500 }
     );
   }

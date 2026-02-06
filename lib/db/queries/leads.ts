@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { db } from "../index";
 import { leads } from "../schema";
 import type { CreateLeadInput, UpdateLeadInput } from "@/lib/validations/lead";
@@ -204,4 +204,27 @@ export async function markLeadAsReplied(
     .where(eq(leads.id, leadId))
     .returning();
   return row ?? null;
+}
+
+/**
+ * Get existing emails in a campaign for duplicate checking during import
+ */
+export async function getExistingEmailsInCampaign(
+  campaignSeedId: string,
+  clerkUserId: string,
+  emails: string[]
+): Promise<string[]> {
+  if (emails.length === 0) return [];
+  
+  const rows = await db
+    .select({ email: leads.email })
+    .from(leads)
+    .where(
+      and(
+        eq(leads.campaignSeedId, campaignSeedId),
+        eq(leads.clerkUserId, clerkUserId),
+        inArray(leads.email, emails)
+      )
+    );
+  return rows.map((r) => r.email);
 }
