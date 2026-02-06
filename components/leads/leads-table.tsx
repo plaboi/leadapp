@@ -138,10 +138,16 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
           <div>
             <h2 className="text-lg font-semibold text-foreground">Your Leads</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              <span className="font-bold">Step 4: </span>Write your<span className="text-blue-600 font-medium"> outreach message </span> 
+              Add <span className="text-blue-600 font-medium">leads  </span> and let the 
+              <span className="text-blue-600 font-medium"> campaign run </span> automatically.
             </p>
           </div>
-          <RefreshButton/>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full">
+              Follow-ups send after 2 days
+            </span>
+            <RefreshButton/>
+          </div>
         </div>
       </div>
       <CardContent className="p-0">

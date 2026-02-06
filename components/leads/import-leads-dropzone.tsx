@@ -282,8 +282,9 @@ export function ImportLeadsDropzone({
             <p className="text-sm text-muted-foreground">
               Drop an Excel or CSV file here, or click to upload
             </p>
-            <p className="text-xs text-muted-foreground/70">
-              Columns: Name, Email, Company, Position, Notes
+            <p className="text-xs text-muted-foreground/70 font-bold">
+            Headers must match exactly:
+            <span className="text-blue-600 font-medium"> Name, Email, Company, Position, Notes </span>
             </p>
           </>
         )}

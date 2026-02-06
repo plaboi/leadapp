@@ -38,7 +38,7 @@ export default async function CampaignPage({ params }: Props) {
           campaignSeedId={campaignSeedId}
         />
         <div className="flex justify-end pr-1 mt-5"> 
-          <RefreshButton />
+          
         </div>
       </div>
     </div>

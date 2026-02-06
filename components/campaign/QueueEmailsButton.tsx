@@ -30,15 +30,7 @@ export function QueueEmailsButton({ isLocked, onQueueComplete, campaignSeedId }:
         return;
       }
       
-      if (data.workerAlreadyRunning) {
-        toast.info(
-          `Drafted Emails have been already queued. Refresh the page to see the updated status.`
-        );
-      } else {
-        toast.success(
-          `Worker started. Queued ${data.enqueued} lead(s). ${data.skipped} skipped.`
-        );
-      }
+      
       
       if (onQueueComplete) {
         onQueueComplete();
@@ -67,7 +59,7 @@ export function QueueEmailsButton({ isLocked, onQueueComplete, campaignSeedId }:
         {isQueueing ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
-          "Queue Emails"
+          "Send Campaign"
         )}
       </Button>
       

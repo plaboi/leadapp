@@ -14,22 +14,18 @@ export function RefreshButton() {
     
     // Force a hard refresh of the page
     window.location.reload();
-    
-    // Alternative: Use router.refresh() with proper cache invalidation
-    // router.refresh();
-    // await new Promise(resolve => setTimeout(resolve, 100));
-    // setIsRefreshing(false);
   };
 
   return (
     <Button
       onClick={handleRefresh}
-      variant="outline"
-      size="icon"
+      variant="ghost"
+      size="sm"
       disabled={isRefreshing}
-      className="h-12 w-12 bg-gray-200 hover:bg-gray-300 border-gray-400"
+      className="h-8 px-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
     >
-      <RefreshCw className={`h-12 w-12 ${isRefreshing ? "animate-spin" : ""}`} />
+      <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+      <span className="text-sm">Refresh</span>
     </Button>
   );
 }

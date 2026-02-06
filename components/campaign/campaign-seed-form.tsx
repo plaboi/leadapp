@@ -198,9 +198,11 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
   };
 
   const handleCheckEmail = async () => {
-    // Flush any pending save first
-    const saved = await flushSave();
-    if (!saved) return;
+    // Skip autosave flush when locked (nothing to save)
+    if (!isLocked) {
+      const saved = await flushSave();
+      if (!saved) return;
+    }
     
     // Guard: no draft saved yet
     if (!seed?.id) {
@@ -267,6 +269,21 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
             <div className="whitespace-pre-wrap rounded bg-muted/50 p-3 text-sm text-foreground">
               {seed?.body}
             </div>
+            <Button
+              onClick={handleCheckEmail}
+              disabled={isChecking}
+              variant="outline"
+              size="sm"
+            >
+              {isChecking ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <Eye className="size-4" />
+                  AI Preview
+                </>
+              )}
+            </Button>
           </div>
         ) : (
           <>
