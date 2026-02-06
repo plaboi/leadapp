@@ -166,7 +166,6 @@ export async function POST(request: Request) {
             outboundMessageId: sendResult.providerMessageId ?? null,
           });
           await scheduleFollowup(lead.id, job.clerkUserId);
-          await transitionLead(lead.id, job.clerkUserId, "followup_queued");
           await deleteJob(job.id);
           processed++;
           console.log(`[Worker1] Initial email sent successfully to lead ${lead.id}`);
@@ -209,6 +208,8 @@ export async function POST(request: Request) {
           continue;
         }
 
+        // Transition to followup_queued now that the follow-up is due
+        await transitionLead(lead.id, job.clerkUserId, "followup_queued");
         await transitionLead(lead.id, job.clerkUserId, "sending");
 
         let subject: string;
