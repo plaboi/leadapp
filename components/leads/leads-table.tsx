@@ -19,6 +19,8 @@ import { Plus, Loader2 } from "lucide-react";
 import { emailSchema } from "@/lib/validations/lead";
 import { QueueEmailsButton } from "@/components/campaign/QueueEmailsButton";
 import type { CampaignSeedApi } from "@/components/campaign/campaign-seed-form";
+import { RefreshButton } from "@/components/refresh-button";
+
 
 type LeadsTableProps = {
   initialLeads: Lead[];
@@ -131,6 +133,17 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
 
   return (
     <Card className="mt-2 bg-card text-card-foreground">
+      <div className="px-6 py-1 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Your Leads</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              <span className="font-bold">Step 4: </span>Write your<span className="text-blue-600 font-medium"> outreach message </span> 
+            </p>
+          </div>
+          <RefreshButton/>
+        </div>
+      </div>
       <CardContent className="p-0">
         <Table>
           <TableHeader className="bg-muted">
@@ -184,7 +197,7 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
                   <Input
                     value={newNotes}
                     onChange={(e) => setNewNotes(e.target.value)}
-                    placeholder="Met at conference"
+                    placeholder="Leads a small B2B sales team"
                     className="h-8"
                   />
                 </TableCell>
@@ -228,6 +241,7 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
                   Ready to add your first contact? Click &quot;Add lead&quot; below.
                 </TableCell>
               </TableRow>
+              
             )}
           </TableBody>
         </Table>
@@ -247,6 +261,7 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
               campaignSeedId={campaignSeedId}
             />
           </div>
+          
         </div>
         {campaignSeedId && (
           <div className="px-4 pb-4">
@@ -254,8 +269,9 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
               campaignSeedId={campaignSeedId}
               onImportComplete={handleImportComplete}
             />
+            
           </div>
-          //put message here for the table 
+         
         )}
       </CardContent>
     </Card>
