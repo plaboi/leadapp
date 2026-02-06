@@ -84,12 +84,12 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
   const handleLockClick = () => {
     // Guard: no draft saved yet
     if (!seed?.id) {
-      toast.error("Press 'Save Draft' before pressing 'Lock campaign'.");
+      toast.error("Press 'Save Draft' before pressing 'Confirm Message'.");
       return;
     }
     // Guard: body is empty/whitespace
     if (!seed.body?.trim()) {
-      toast.error("Add a campaign message, then press 'Save Draft' before pressing 'Lock campaign'.");
+      toast.error("Add a campaign message, then press 'Save Draft' before pressing 'Confirm Message'.");
       return;
     }
     setShowLockConfirm(true);
@@ -106,7 +106,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
       const res = await fetch(endpoint, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to lock");
+        toast.error(data.error ?? "Failed to Confirm");
         return;
       }
       const updatedSeed = data.campaign || data.seed;
@@ -114,9 +114,9 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
       onSeedChange?.(updatedSeed);
       setSubject(updatedSeed.subject ?? "");
       setBody(updatedSeed.body);
-      toast.success("Campaign locked");
+      toast.success("Campaign Confirmed");
     } catch {
-      toast.error("Failed to lock campaign");
+      toast.error("Failed to confirm campaign");
     } finally {
       setIsLocking(false);
     }
@@ -161,9 +161,9 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
       <CardHeader>
         <h2 className="text-lg font-semibold text-foreground">Your Outreach Template</h2>
         <p className="text-muted-foreground text-sm">
-        <span className="font-bold">Step 1: </span><span className="text-blue-600 font-medium">Write your outreach message  </span>
-        <span className="font-bold">Step 2: </span><span className="text-blue-600 font-medium">Preview how AI rewrites it</span> and refine if needed  
-        <span className="font-bold">   Step 3: </span><span className="text-blue-600 font-medium">Lock it in</span> <span className="text-red-600 font-medium">(no edits after this)</span>, then add leads and send
+        <span className="font-bold">Step 1: </span>Write your<span className="text-blue-600 font-medium"> outreach message </span>below 
+        <span className="font-bold"> Step 2: </span>Preview how<span className="text-blue-600 font-medium"> AI writes you message</span>  
+        <span className="font-bold">   Step 3: </span><span className="text-blue-600 font-medium">Confirm </span>your message
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -249,14 +249,14 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
                 ) : (
                   <>
                     <Lock className="size-4" />
-                    Lock campaign
+                    Confirm Message
                   </>
                 )}
               </Button>
               
             </div>
             <p className="text-muted-foreground text-sm">
-              <span className="text-red-600 font-medium">'Make sure to 'Save draft' EACH TIME before reviewing or locking in your campaign.</span>
+              Make sure to <span className="text-blue-600 font-medium">'Save draft' each time </span>before reviewing or locking in your campaign.
             </p>
           </>
         )}
@@ -264,7 +264,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
         {showLockConfirm && (
           <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-4">
             <p className="text-muted-foreground text-sm">
-              Once locked, this message cannot be edited. Are you sure?
+              Once confirmed, this message cannot be edited. Are you sure?
             </p>
             <div className="flex gap-2">
               <Button
@@ -278,7 +278,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
                 {isLocking ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  "Confirm lock"
+                  "Confirm"
                 )}
               </Button>
             </div>
@@ -288,7 +288,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
 
       {/* Preview Panel - rendered between Campaign section and Leads table */}
       <div className="mt-4 rounded-md border border-border bg-muted/30 p-4">
-      <h2 className="text-sm font-medium text-foreground mb-4">Email Preview</h2>
+      <h2 className="text-sm font-medium text-foreground mb-4">AI Email Preview</h2>
       {seed?.previewSubject || seed?.previewBody ? (
         <div className="rounded-md bg-background border border-border p-4 space-y-4">
           {seed.previewSubject && (
@@ -314,7 +314,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
         </div>
       ) : (
         <p className="text-muted-foreground text-sm italic">
-          Preview how the AI sends your message, then optimise it before sending at scale.
+          Your AI outreach message can be displayed here
         </p>
       )}
     </div>
