@@ -149,20 +149,22 @@ export function Sidebar() {
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Campaigns
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={handleCreateCampaign}
-              disabled={isCreating}
-              title="Add new campaign"
-            >
-              {isCreating ? (
-                <Loader2 className="size-3 animate-spin" />
-              ) : (
-                <Plus className="size-3" />
-              )}
-            </Button>
+            {campaigns.length === 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={handleCreateCampaign}
+                disabled={isCreating}
+                title="Add new campaign"
+              >
+                {isCreating ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <Plus className="size-3" />
+                )}
+              </Button>
+            )}
           </div>
           <div className="mt-1 space-y-1">
             {isLoadingCampaigns ? (

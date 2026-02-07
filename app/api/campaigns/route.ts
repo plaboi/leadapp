@@ -33,6 +33,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Enforce one campaign per user
+  const existing = await listCampaignSeedsForUser(userId);
+  if (existing.length > 0) {
+    return NextResponse.json(
+      { error: "You already have a campaign. Delete it before creating a new one." },
+      { status: 409 }
+    );
+  }
+
   const body = await request.json();
   const parsed = createCampaignSeedSchema.safeParse(body);
   if (!parsed.success) {

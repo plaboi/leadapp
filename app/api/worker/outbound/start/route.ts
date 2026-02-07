@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getCampaignSeedByUser, getCampaignSeedById } from "@/lib/db/queries/campaign-seeds";
-import { getEligibleDraftLeads, getEligibleDraftLeadsByCampaign } from "@/lib/db/queries/leads";
+import { getCampaignSeedById } from "@/lib/db/queries/campaign-seeds";
+import { getEligibleDraftLeadsByCampaign } from "@/lib/db/queries/leads";
 import { enqueueInitial } from "@/lib/db/queries/queue";
 import { transitionLead } from "@/lib/transitions";
 import {
@@ -15,44 +15,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Parse optional campaignSeedId from body
+  // Parse required campaignSeedId from body
   let campaignSeedId: string | undefined;
   try {
     const body = await request.json();
     campaignSeedId = body.campaignSeedId;
   } catch {
-    // No body or invalid JSON, campaignSeedId remains undefined
+    // No body or invalid JSON
+  }
+
+  if (!campaignSeedId) {
+    return NextResponse.json(
+      { error: "campaignSeedId is required" },
+      { status: 400 }
+    );
   }
 
   try {
     // Check if worker is already running
     const alreadyRunning = await isOutboundWorkerRunning();
 
-    // Get campaign seed - either specific or default
-    let seed;
-    if (campaignSeedId) {
-      seed = await getCampaignSeedById(campaignSeedId, userId);
-      if (!seed) {
-        return NextResponse.json(
-          { error: "Campaign not found" },
-          { status: 404 }
-        );
-      }
-    } else {
-      seed = await getCampaignSeedByUser(userId);
+    // Get campaign seed scoped to this user
+    const seed = await getCampaignSeedById(campaignSeedId, userId);
+    if (!seed) {
+      return NextResponse.json(
+        { error: "Campaign not found" },
+        { status: 404 }
+      );
     }
 
-    if (!seed?.lockedAt) {
+    if (!seed.lockedAt) {
       return NextResponse.json(
         { error: "Campaign seed must be locked before queueing emails" },
         { status: 400 }
       );
     }
 
-    // Enqueue eligible draft leads - use campaign-specific query if campaignSeedId provided
-    const drafts = campaignSeedId 
-      ? await getEligibleDraftLeadsByCampaign(campaignSeedId, userId)
-      : await getEligibleDraftLeads(userId);
+    // Enqueue eligible draft leads scoped to this campaign only
+    const drafts = await getEligibleDraftLeadsByCampaign(campaignSeedId, userId);
     const results: { leadId: string; enqueued: boolean; reason?: string }[] = [];
 
     for (const lead of drafts) {
