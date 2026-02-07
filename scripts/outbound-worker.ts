@@ -2,7 +2,7 @@
  * Outbound Worker Script
  * 
  * This script runs as a separate process that polls the outbound tick API
- * at regular intervals. It automatically stops after 3 consecutive empty ticks.
+ * at regular intervals. It runs continously until manually stopped (replicates the cron service job in production)
  * 
  * Usage: npx tsx scripts/outbound-worker.ts
  */
@@ -17,7 +17,7 @@ if (!CRON_SECRET) {
   process.exit(1);
 }
 
-async function tick(): Promise<{ shouldStop: boolean }> {
+async function tick(): Promise<void> {
   try {
     const response = await fetch(`${BASE_URL}/api/worker/outbound/tick`, {
       method: "POST",
@@ -30,19 +30,15 @@ async function tick(): Promise<{ shouldStop: boolean }> {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[Worker1] Tick failed with status ${response.status}: ${errorText}`);
-      return { shouldStop: false }; // Don't stop on errors, let it retry
+      return
     }
 
-    const result = await response.json();
-    
-    if (result.shouldStop) {
-      return { shouldStop: true };
-    }
+    await response.json();
+    console.log(`[Worker1] Tick completed at ${new Date().toISOString()}`);
 
-    return { shouldStop: false };
   } catch (error) {
     console.error("[Worker1] Tick error:", error);
-    return { shouldStop: false }; // Don't stop on network errors
+    return
   }
 }
 
@@ -52,20 +48,13 @@ async function run() {
   console.log(`[Worker1] Tick interval: ${TICK_INTERVAL_MS / 1000}s`);
 
   // Initial tick
-  const initialResult = await tick();
-  if (initialResult.shouldStop) {
-    console.log("[Worker1] Worker stopped on initial tick");
-    process.exit(0);
-  }
+  
+  await tick();
 
-  // Start the interval
+  
+  // Start the interval - runs forever
   const interval = setInterval(async () => {
-    const result = await tick();
-    if (result.shouldStop) {
-      console.log("[Worker1] Worker stopped due to 3 consecutive empty ticks");
-      clearInterval(interval);
-      process.exit(0);
-    }
+    await tick();
   }, TICK_INTERVAL_MS);
 
   // Handle graceful shutdown

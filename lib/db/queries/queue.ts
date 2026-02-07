@@ -71,7 +71,7 @@ export async function enqueueInitial(
     runAfter: new Date(),
     attempts: 0,
     maxAttempts: 3,
-  });
+  }); //tries 3 times before giving failed status
   return { enqueued: true };
 }
 

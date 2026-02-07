@@ -126,7 +126,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
     }
     saveTimeoutRef.current = setTimeout(() => {
       saveDraft(false);
-    }, 800);
+    }, 400);
   }, [saveDraft]);
 
   // Handle blur - immediate save

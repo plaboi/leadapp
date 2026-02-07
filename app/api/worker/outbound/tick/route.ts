@@ -321,7 +321,7 @@ async function handleJobFailure(
     await deleteJob(job.id);
     return;
   }
-  const delaySeconds = calculateBackoff(attempts);
+  const delaySeconds = calculateBackoff(attempts); //exponential backoff with jitter 
   const runAfter = new Date(Date.now() + delaySeconds * 1000);
   console.log(`[Worker1] Rescheduling job ${job.id}, attempt ${attempts}, retry in ${delaySeconds}s`);
   await rescheduleJob(job.id, runAfter, attempts);
