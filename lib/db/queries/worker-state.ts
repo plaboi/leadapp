@@ -1,8 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../index";
 import { workerState } from "../schema";
-import { EMPTY_TICK_COUNT } from "@/lib/constants";
-
 
 export type WorkerStateRow = typeof workerState.$inferSelect;
 
@@ -84,26 +82,23 @@ export async function stopOutboundWorker(): Promise<WorkerStateRow | null> {
 
 export async function incrementEmptyTickCount(): Promise<{
   emptyTickCount: number;
-  shouldStop: boolean;
 }> {
   const state = await getOutboundWorkerState();
   if (!state) {
-    return { emptyTickCount: 0, shouldStop: false };
+    return { emptyTickCount: 0 };
   }
 
   const newCount = state.emptyTickCount + 1;
-  const shouldStop = newCount >= EMPTY_TICK_COUNT; //worker stops after x consecutive clicks
 
   await db
     .update(workerState)
     .set({
       emptyTickCount: newCount,
       lastTickAt: new Date(),
-      ...(shouldStop ? { isRunning: false, stoppedAt: new Date() } : {}),
     })
     .where(eq(workerState.id, OUTBOUND_WORKER_ID));
 
-  return { emptyTickCount: newCount, shouldStop };
+  return { emptyTickCount: newCount };
 }
 
 export async function resetEmptyTickCount(): Promise<void> {

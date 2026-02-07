@@ -43,25 +43,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         processed: 0, 
         message: "Worker not running",
-        shouldStop: true 
       });
     }
 
     const jobs = await fetchAndLockJobs(MAX_JOBS_PER_TICK);
     
     if (jobs.length === 0) {
-      const { emptyTickCount, shouldStop } = await incrementEmptyTickCount();
+      const { emptyTickCount } = await incrementEmptyTickCount();
       console.log(`[Worker1] No due jobs (empty count: ${emptyTickCount})`);
-      
-      if (shouldStop) {
-        console.log(`[Worker1] Stopped after 3 consecutive empty ticks at ${new Date().toISOString()}`);
-      }
       
       return NextResponse.json({ 
         processed: 0, 
         message: "No due jobs", 
         emptyTickCount,
-        shouldStop
       });
     }
 
@@ -295,7 +289,6 @@ export async function POST(request: Request) {
       processed, 
       failed,
       total: jobs.length,
-      shouldStop: false
     });
   } catch (error) {
     console.error("[Worker1] Tick error:", error);

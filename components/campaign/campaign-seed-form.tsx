@@ -40,13 +40,21 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const latestSubjectRef = useRef(subject);
   const latestBodyRef = useRef(body);
+  // Track campaign ID so we only reset form fields when switching campaigns,
+  // not when our own save callback updates initialSeed
+  const prevCampaignIdRef = useRef(initialSeed?.id);
 
   useEffect(() => {
     setSeed(initialSeed);
-    setSubject(initialSeed?.subject ?? "");
-    setBody(initialSeed?.body ?? "");
-    latestSubjectRef.current = initialSeed?.subject ?? "";
-    latestBodyRef.current = initialSeed?.body ?? "";
+    // Only reset form fields when switching to a different campaign (or first load)
+    // This prevents our own save from overwriting in-progress typing
+    if (initialSeed?.id !== prevCampaignIdRef.current) {
+      setSubject(initialSeed?.subject ?? "");
+      setBody(initialSeed?.body ?? "");
+      latestSubjectRef.current = initialSeed?.subject ?? "";
+      latestBodyRef.current = initialSeed?.body ?? "";
+      prevCampaignIdRef.current = initialSeed?.id;
+    }
   }, [initialSeed]);
 
   const isLocked = !!seed?.lockedAt;
@@ -126,7 +134,7 @@ export function CampaignSeedForm({ initialSeed, onSeedChange, campaignSeedId }: 
     }
     saveTimeoutRef.current = setTimeout(() => {
       saveDraft(false);
-    }, 400);
+    }, 1500);
   }, [saveDraft]);
 
   // Handle blur - immediate save
