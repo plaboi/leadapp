@@ -13,6 +13,7 @@ type QueueEmailsButtonProps = {
 
 export function QueueEmailsButton({ isLocked, onQueueComplete, campaignSeedId }: QueueEmailsButtonProps) {
   const [isQueueing, setIsQueueing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleQueueInitial = async () => {
     setIsQueueing(true);
@@ -44,14 +45,19 @@ export function QueueEmailsButton({ isLocked, onQueueComplete, campaignSeedId }:
     }
   };
 
+  const handleConfirmedStart = async () => {
+    setShowConfirm(false);
+    await handleQueueInitial();
+  };
+
   if (!isLocked) {
     return null;
   }
 
   return (
-    <div className="pt-3">
+    <div className="pt-3 relative">
       <Button
-        onClick={handleQueueInitial}
+        onClick={() => setShowConfirm(true)}
         disabled={isQueueing}
         variant="secondary"
         className="bg-black hover:bg-black/80 text-white border-gray-400"
@@ -63,6 +69,42 @@ export function QueueEmailsButton({ isLocked, onQueueComplete, campaignSeedId }:
         )}
       </Button>
       
+      {showConfirm && (
+        <div className="absolute right-0 top-full mt-2 z-10 rounded-lg border border-amber-500/50 bg-amber-50/95 p-6 min-w-[420px] shadow-lg">
+          <div className="space-y-4">
+            <div>
+              <p className="text-gray-900 text-lg font-semibold mb-3">Ready to send?</p>
+              <div className="text-gray-700 text-sm space-y-2">
+                <p className="font-medium">This will:</p>
+                <p className="pl-2">• Send emails to all leads in <span className="font-bold text-gray-900">Draft</span> status</p>
+                <p className="pl-2">• Send follow-ups automatically after 2 days if no reply</p>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowConfirm(false)}
+                className="px-6 flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleConfirmedStart}
+                disabled={isQueueing}
+                className="bg-blue-700 hover:bg-blue-800 text-white px-6 flex-1"
+              >
+                {isQueueing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Start"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

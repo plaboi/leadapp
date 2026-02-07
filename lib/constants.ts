@@ -3,10 +3,8 @@ export const RATE_LIMIT_SECONDS = 60; // 1 minute between sends per user
 export const MAX_JOBS_PER_TICK = 10; // max jobs processed per cron tick
 export const BACKOFF_CAP_SECONDS = 3600; // max 1 hour backoff
 
-/**
- * Default body for new campaign seeds.
- * IMPORTANT: Only set at create-time. Never use to overwrite existing body.
- */
+
+// for demonstartion of the example campaign body 
 export const DEFAULT_CAMPAIGN_BODY = "Hi there,\n\nI wanted to reach out and see if this is something you’re currently exploring.\n\nWe help teams streamline outbound email and follow-ups so they can save time and get more replies without adding extra tools or manual work.\n\nIf this sounds relevant, happy to share more or give a quick overview.\nBest,\nAcme Corp";
 
 

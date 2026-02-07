@@ -46,7 +46,7 @@ export default function Home() {
               one simple tool.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100 px-12 py-8 text-lg" asChild>
+              <Button size="lg" className="bg-white text-zinc-900 hover:bg-zinc-300 px-12 py-8 text-lg" asChild>
                 
                 <Link href="/sign-up">Sign Up</Link>
               </Button>
@@ -206,7 +206,7 @@ export default function Home() {
 
             {/* CTA */}
             <div className="mt-16 text-center">
-              <Button size="lg" className="bg-zinc-900 text-white hover:bg-zinc-800" asChild>
+              <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-200 px-8 py-6 text-lg" asChild>
                 <Link href="/sign-up">Get Started</Link>
               </Button>
             </div>

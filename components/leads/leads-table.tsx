@@ -20,6 +20,7 @@ import { emailSchema } from "@/lib/validations/lead";
 import { QueueEmailsButton } from "@/components/campaign/QueueEmailsButton";
 import type { CampaignSeedApi } from "@/components/campaign/campaign-seed-form";
 import { RefreshButton } from "@/components/refresh-button";
+import { StatusLegend } from "./status-legend";
 
 
 type LeadsTableProps = {
@@ -143,6 +144,7 @@ export function LeadsTable({ initialLeads, campaignSeed, campaignSeedId }: Leads
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <StatusLegend />
             <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full">
               Follow-ups send after 2 days
             </span>
